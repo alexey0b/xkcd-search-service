@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: search-service
+data:
+  ADMIN_USER: admin
+  ADMIN_PASSWORD: password
+  ADMIN_JWT_KEY: your-secret-key
+  TOKEN_TTL: 2m
+  FRONTEND_ADDRESS: :3000
+  FRONTEND_TIMEOUT: 10s
+  API_ADDRESS: http://api:8080
+  API_TIMEOUT: 3m

@@ -1,0 +1,178 @@
+services:
+  frontend:
+    image: frontend:latest
+    build:
+      context: search-services
+      dockerfile: Dockerfile.frontend
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - 23000:3000
+    volumes:
+      - ./search-services/frontend/config.yaml:/config.yaml
+    environment:
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=password
+      - ADMIN_JWT_KEY=your-secret-key
+      - TOKEN_TTL=2m
+      - FRONTEND_ADDRESS=:3000
+      - FRONTEND_TIMEOUT=10s
+      - API_ADDRESS=http://api:8080
+      - API_TIMEOUT=3m
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api:
+    image: api:latest
+    build:
+      context: search-services
+      dockerfile: Dockerfile.api
+    container_name: api
+    restart: unless-stopped
+    ports:
+      - 28080:8080
+    volumes:
+      - ./search-services/api/config.yaml:/config.yaml
+    environment:
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=password
+      - ADMIN_JWT_KEY=your-secret-key
+      - TOKEN_TTL=2m
+      - API_ADDRESS=:8080
+      - WORDS_ADDRESS=words:8081
+      - UPDATE_ADDRESS=update:8082
+      - SEARCH_ADDRESS=search:8083
+      - SEARCH_CONCURRENCY=10
+      - SEARCH_RATE=100
+    depends_on:
+      search:
+        condition: service_started
+      update:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  search:
+    image: search:latest
+    build:
+      context: search-services
+      dockerfile: Dockerfile.search
+    container_name: search
+    restart: unless-stopped
+    ports:
+      - 28083:8083
+    volumes:
+      - ./search-services/search/config.yaml:/config.yaml
+    environment:
+      - INDEX_TTL=24h
+      - SEARCH_ADDRESS=:8083
+      - WORDS_ADDRESS=words:8081
+      - DB_ADDRESS=postgres://postgres:password@postgres:5432/postgres
+      - BROKER_ADDRESS=nats://nats:4222
+      - BROKER_SUBJECT=xkcd.db.updated
+    depends_on:
+      postgres:
+        condition: service_healthy
+      words:
+        condition: service_started
+
+  update:
+    image: update:latest
+    build:
+      context: search-services
+      dockerfile: Dockerfile.update
+    container_name: update
+    restart: unless-stopped
+    ports:
+      - 28082:8082
+    volumes:
+      - ./search-services/update/config.yaml:/config.yaml
+    environment:
+      - UPDATE_ADDRESS=:8082
+      - WORDS_ADDRESS=words:8081
+      - XKCD_CONCURRENCY=10
+      - XKCD_URL=https://xkcd.com
+      - DB_ADDRESS=postgres://postgres:password@postgres:5432/postgres
+      - BROKER_ADDRESS=nats://nats:4222
+      - BROKER_SUBJECT=xkcd.db.updated
+    depends_on:
+      postgres:
+        condition: service_healthy
+      words:
+        condition: service_started
+      nats:
+        condition: service_started
+
+  words:
+    image: words:latest
+    build:
+      context: search-services
+      dockerfile: Dockerfile.words
+    container_name: words
+    restart: unless-stopped
+    ports:
+      - 28081:8081
+    volumes:
+      - ./search-services/words/config.yaml:/config.yaml
+    environment:
+      - WORDS_ADDRESS=:8081
+
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  pgadmin:
+    image: dpage/pgadmin4:9.11.0
+    container_name: pgadmin4
+    restart: unless-stopped
+    ports:
+      - "18888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@test.com
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_DISABLE_POSTFIX: "true"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+  nats:
+    image: nats:2.12.3
+    container_name: nats
+    ports:
+      - "4222:4222"
+
+  tests:
+    image: tests:latest
+    build:
+      context: tests
+      dockerfile: Dockerfile.tests
+    container_name: tests
+    restart: "no"
+    entrypoint: "true"
+
+volumes:
+  postgres:
+  pgadmin:

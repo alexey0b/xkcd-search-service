@@ -1,0 +1,103 @@
+body { 
+    padding: 20px; 
+}
+
+.container { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    background: rgba(255,255,255,0.95); 
+    padding: 30px; 
+    border-radius: 15px; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+}
+
+h1 { 
+    text-align: center; 
+    margin-bottom: 30px; 
+}
+
+.search-box { 
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 30px; 
+}
+
+input[type="text"] { 
+    flex: 1; 
+    padding: 12px; 
+    font-size: 16px; 
+    border: 1px solid #ddd; 
+    border-radius: 4px; 
+}
+
+button { 
+    padding: 12px 24px; 
+    background: #007bff; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 16px; 
+}
+
+button:hover { 
+    background: #0056b3; 
+}
+
+.results { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+    gap: 20px; 
+}
+
+.comic { 
+    background: white; 
+    padding: 15px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+    display: flex;
+    flex-direction: column;
+}
+
+.comic img { 
+    width: 100%; 
+    height: auto; 
+    border-radius: 4px; 
+    margin-bottom: 12px;
+}
+
+.comic h3 { 
+    margin: 0;
+    padding: 12px 15px;
+    font-size: 16px;
+    text-align: center;
+    background: #e9ecef;
+    color: #333;
+    border-radius: 6px;
+    border: 3px solid #333;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    font-weight: bold;
+}
+
+.error { 
+    color: red; 
+    text-align: center; 
+    padding: 20px; 
+}
+
+.loading { 
+    text-align: center; 
+    padding: 20px; 
+}
+
+.admin-link { 
+    text-align: right; 
+    margin-bottom: 20px; 
+}
+
+.admin-link a { 
+    color: #333; 
+    text-decoration: none; 
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+}

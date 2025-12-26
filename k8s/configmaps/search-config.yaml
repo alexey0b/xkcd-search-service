@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: search-config
+  namespace: search-service
+data:
+  INDEX_TTL: 24h
+  SEARCH_ADDRESS: :8083
+  WORDS_ADDRESS: words:8081
+  DB_ADDRESS: postgres://postgres:password@postgres:5432/postgres
+  BROKER_ADDRESS: nats://nats:4222
+  BROKER_SUBJECT: xkcd.db.updated

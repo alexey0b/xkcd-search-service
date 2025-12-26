@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/static/css/common.css" />
+    <link rel="stylesheet" href="/static/css/admin.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="logout">
+        <a href="/" onclick="logout()">Logout</a>
+      </div>
+      <h1>⚙️ Admin Panel</h1>
+      <div class="panel">
+        <div class="stats" id="stats">
+          <div class="stat-box">
+            <h3>Total Comics</h3>
+            <p id="comicsTotal">-</p>
+          </div>
+          <div class="stat-box">
+            <h3>Comics Fetched</h3>
+            <p id="comicsFetched">-</p>
+          </div>
+          <div class="stat-box">
+            <h3>Total Words</h3>
+            <p id="wordsTotal">-</p>
+          </div>
+          <div class="stat-box">
+            <h3>Unique Words</h3>
+            <p id="wordsUnique">-</p>
+          </div>
+        </div>
+        <div class="status" id="status">Status: Loading...</div>
+        <div class="actions">
+          <button class="btn-update" onclick="updateDB()">
+            🔄 Update Database
+          </button>
+          <button class="btn-drop" onclick="dropDB()">🗑️ Drop Database</button>
+        </div>
+      </div>
+    </div>
+    <script src="/static/js/admin.js"></script>
+  </body>
+</html>

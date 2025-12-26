@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: update
+  namespace: search-service
+spec:
+  type: ClusterIP
+  selector:
+    app: update
+  ports:
+  - port: 8082
+    targetPort: 8082

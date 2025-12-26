@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: words-config
+  namespace: search-service
+data:
+  WORDS_ADDRESS: :8081

@@ -1,0 +1,18 @@
+log_level: DEBUG
+words_address: :8081
+update_address: :8082
+search_address: :8083
+
+api_server:
+  address: :8080
+  timeout: 5s
+
+limits:
+  search_concurrency: 10
+  search_rate: 100
+
+auth:
+  admin_user: admin
+  admin_password: password
+  jwt_secret: your-secret-key
+  token_ttl: 2m

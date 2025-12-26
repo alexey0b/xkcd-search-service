@@ -1,0 +1,12 @@
+log_level: DEBUG
+words_address: localhost:8081
+update_address: localhost:8082
+db_address: postgres://postgres:password@localhost:5432/postgres?sslmode=disable
+broker:
+  address: nats://localhost:4222
+  topic: xkcd.db.updated
+xkcd:
+  url: https://xkcd.com
+  concurrency: 15
+  check_period: 1h
+  timeout: 10s

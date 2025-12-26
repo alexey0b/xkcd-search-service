@@ -1,0 +1,15 @@
+log_level: DEBUG
+
+web_server:
+  address: :3000
+  timeout: 10s
+
+api:
+  address: http://localhost:8080
+  timeout: 3m
+
+auth:
+  admin_user: admin
+  admin_password: password
+  jwt_secret: your-secret-key
+  token_ttl: 2m

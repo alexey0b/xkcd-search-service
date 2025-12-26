@@ -1,0 +1,13 @@
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+body { 
+    font-family: Arial, sans-serif; 
+    background: #f5f5f5 url('/static/images/characters.png') no-repeat center top fixed;
+    background-size: auto;
+    min-height: 100vh;
+}
+

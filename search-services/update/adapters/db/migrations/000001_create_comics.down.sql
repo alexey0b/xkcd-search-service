@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS comics;
+
+DROP TABLE IF EXISTS comics_stats;
