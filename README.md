@@ -100,7 +100,7 @@ http://kubernetes.docker.internal:3000
 
 ## Демонстрация
 
-🎥 [Смотреть демонстрацию работы сервиса](https://drive.google.com/file/d/1J_ayHwcY922haA5PAZ0vhKhF_SiGEZX_/view?usp=sharing)
+🎥 ![Демонстрация](docs/demo.gif)
 
 ### Скриншоты
 
