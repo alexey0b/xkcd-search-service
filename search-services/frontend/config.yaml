@@ -4,6 +4,10 @@ web_server:
   address: :3000
   timeout: 10s
 
+prom_server:
+  address: :2112
+  timeout: 5s
+
 api:
   address: http://localhost:8080
   timeout: 3m

@@ -11,23 +11,30 @@ import (
 )
 
 type Service struct {
-	log         *slog.Logger
-	db          DB
-	xkcd        XKCD
-	words       Words
-	publisher   Publisher
+	log     *slog.Logger
+	metrics MetricsCollector
+
+	db        DB
+	xkcd      XKCD
+	words     Words
+	publisher Publisher
+
 	concurrency int
 	inProgress  atomic.Bool
 }
 
 func NewService(
-	log *slog.Logger, db DB, xkcd XKCD, words Words, publisher Publisher, concurrency int,
+	log *slog.Logger, metrics MetricsCollector, db DB, xkcd XKCD, words Words, publisher Publisher, concurrency int,
 ) (*Service, error) {
 	if concurrency < 1 {
 		return nil, fmt.Errorf("wrong concurrency specified: %d", concurrency)
 	}
+	if metrics == nil {
+		metrics = &NoopMetricsCollector{}
+	}
 	return &Service{
 		log:         log,
+		metrics:     metrics,
 		db:          db,
 		xkcd:        xkcd,
 		words:       words,
@@ -72,7 +79,9 @@ func (s *Service) Update(ctx context.Context) error {
 
 	s.log.Info("update started")
 	defer func(start time.Time) {
-		s.log.Info("update finished", "duration", time.Since(start))
+		duration := time.Since(start)
+		s.metrics.SetLastUpdateDuration(duration)
+		s.log.Info("update finished", "duration", duration)
 	}(time.Now())
 
 	// get existing IDs in DB
@@ -82,6 +91,7 @@ func (s *Service) Update(ctx context.Context) error {
 		return fmt.Errorf("failed to get existing IDs in DB: %w", err)
 	}
 	s.log.Debug("existing comics in DB", "count", len(IDs))
+
 	exists := make(map[int64]bool, len(IDs))
 	for _, id := range IDs {
 		exists[id] = true
@@ -133,6 +143,8 @@ func (s *Service) Update(ctx context.Context) error {
 		s.log.Error("failed to add comics", "error", err)
 		return fmt.Errorf("failed to add comics: %w", err)
 	}
+	s.metrics.SetLastUpdateTimestamp()
+	s.metrics.SetComicsFetched(int64(len(comics)))
 	s.log.Debug("added new comics", "counter", len(comics))
 
 	// отправка сообщения через брокер-Nats после успешного обновления
@@ -193,11 +205,18 @@ func (s *Service) Drop(ctx context.Context) error {
 	}
 	defer s.inProgress.Store(false)
 
+	s.log.Info("drop started")
+	defer func(start time.Time) {
+		s.log.Info("drop finished", "duration", time.Since(start))
+	}(time.Now())
+
 	err := s.db.Drop(ctx)
 	if err != nil {
 		s.log.Error("failed to drop db entries", "error", err)
 		return fmt.Errorf("failed to drop db entries: %w", err)
 	}
+	s.metrics.SetLastUpdateTimestamp()
+
 	// отправка сообщения через брокер-Nats после успешного "обнулениия" базы
 	if err := s.publisher.Publish(EventReset); err != nil {
 		s.log.Error("failed to publish", "error", err)

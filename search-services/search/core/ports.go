@@ -25,3 +25,8 @@ type Searcher interface {
 type EventHandler interface {
 	HandleEvent(ctx context.Context, eventType EventType) error
 }
+
+type MetricsCollector interface {
+	SetIndexSize(size int64)
+	SetIndexLastUpdateTimestamp()
+}

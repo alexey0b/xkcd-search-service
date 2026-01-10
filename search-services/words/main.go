@@ -79,9 +79,10 @@ func run(cfg config.Config, log *slog.Logger) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
+	// Graceful shutdown
 	go func() {
 		<-ctx.Done()
-		log.Debug("shutting down Words service...")
+		log.Debug("Stopping gRPC server...")
 
 		done := make(chan struct{})
 		go func() {
@@ -91,14 +92,14 @@ func run(cfg config.Config, log *slog.Logger) error {
 
 		select {
 		case <-done:
-			log.Debug("Words service stopped gracefully")
+			log.Debug("gRPC server stopped")
 		case <-time.After(30 * time.Second):
-			log.Debug("Words service forcing shutdown")
+			log.Debug("gRPC server forcing shutdown")
 			s.Stop()
 		}
 	}()
 
-	log.Info("Words service started", "address", cfg.Address, "log_level", cfg.LogLevel)
+	log.Info("Words server started", "address", cfg.Address, "log_level", cfg.LogLevel)
 	if err := s.Serve(listener); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
 	}

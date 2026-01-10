@@ -51,24 +51,28 @@ k8s-load-images: build-images
 
 .PHONY: k8s-start
 k8s-start: k8s-load-images
-	${kubectl_runtime} apply -f k8s/namespace.yaml
-	${kubectl_runtime} apply -f k8s/ -R
+	${kubectl_runtime} apply -f infrastructure/k8s/namespace.yaml
+	${kubectl_runtime} apply -f infrastructure/k8s/ -R
 
 .PHONY: k8s-delete
 k8s-delete:
-	${kubectl_runtime} delete -f k8s/ -R --ignore-not-found=true
+	${kubectl_runtime} delete -f infrastructure/k8s/ -R --ignore-not-found=true
 
 .PHONY: k8s-restart
 k8s-restart: k8s-delete k8s-start
 
 .PHONY: k8s-port-forward
 k8s-port-forward:
-	@echo "Access: http://kubernetes.docker.internal:3000"
+	@echo "Access to Frontend: http://kubernetes.docker.internal:3000"
 	${kubectl_runtime} port-forward -n ingress-nginx svc/ingress-nginx-controller 3000:80
 
 .PHONY: k8s-dashboard
 k8s-dashboard:
 	${minikube_runtime} dashboard
+
+.PHONY: k8s-prometheus-ui
+k8s-prometheus-ui:
+	${minikube_runtime} service prometheus -n search-service
 
 # Testing Commands
 
@@ -96,7 +100,7 @@ cover:
 	make -C search-services cover 
 	mv search-services/cover.out .
 	mv search-services/cover.html .
-	
+
 .PHONY: security
 security:
 	make -C search-services security

@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"time"
 )
 
 //go:generate mockgen -source=ports.go -destination=mocks.go -package=core
@@ -31,4 +32,10 @@ type Words interface {
 
 type Publisher interface {
 	Publish(event EventType) error
+}
+
+type MetricsCollector interface {
+	SetComicsFetched(count int64)
+	SetLastUpdateTimestamp()
+	SetLastUpdateDuration(duration time.Duration)
 }

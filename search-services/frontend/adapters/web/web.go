@@ -27,6 +27,10 @@ func encodeReply(w io.Writer, reply any) error {
 	return nil
 }
 
+func NewHealthHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {}
+}
+
 func NewPingHandler(log *slog.Logger, pinger core.Pinger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reply, err := pinger.Ping(r.Context())

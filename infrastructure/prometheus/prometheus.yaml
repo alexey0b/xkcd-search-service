@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+scrape_configs:
+  # Prometheus
+  - job_name: "prometheus"
+    static_configs:
+      - targets: [":9090"]
+
+  # Frontend
+  - job_name: "frontend"
+    static_configs:
+      - targets: ["frontend:2112"]
+    scrape_interval: 10s
+
+  # API Gateway
+  - job_name: "api"
+    static_configs:
+      - targets: ["api:2113"]
+    scrape_interval: 10s
+
+  # Search
+  - job_name: "search"
+    static_configs:
+      - targets: ["search:2114"]
+    scrape_interval: 10s
+
+  # Update
+  - job_name: "update"
+    static_configs:
+      - targets: ["update:2115"]
+    scrape_interval: 10s

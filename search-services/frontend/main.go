@@ -15,8 +15,11 @@ import (
 	"search-service/frontend/adapters/web"
 	"search-service/frontend/adapters/web/middleware"
 	"search-service/frontend/config"
+	"sync"
 	"syscall"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 //go:embed adapters/web/templates
@@ -40,11 +43,10 @@ func main() {
 }
 
 func run(cfg config.Config, log *slog.Logger) error {
-	log.Info("starting Web server")
 	log.Debug("debug messages are enabled")
 
 	// API adapter
-	api := api.NewClient(cfg.Api.ApiAddress, cfg.Api.Timeout, log)
+	api := api.NewClient(cfg.Api.Address, cfg.Api.Timeout, log)
 
 	jwtAth, err := middleware.NewJwtAuthenticator(cfg.Auth.AdminUser, cfg.Auth.AdminPassword, cfg.Auth.JwtSecret, cfg.Auth.TokenTtl)
 	if err != nil {
@@ -52,6 +54,9 @@ func run(cfg config.Config, log *slog.Logger) error {
 	}
 
 	mux := http.NewServeMux()
+
+	// Web health
+	mux.Handle("GET /health", web.NewHealthHandler())
 
 	// HTML pages
 	htmlFiles, err := fs.Sub(templatesFiles, "adapters/web/templates")
@@ -79,33 +84,69 @@ func run(cfg config.Config, log *slog.Logger) error {
 	mux.Handle("POST /api/admin/update", jwtAth.CheckToken(web.NewUpdateHandler(log, api)))
 	mux.Handle("DELETE /api/admin/db", jwtAth.CheckToken(web.NewDropHandler(log, api)))
 
-	handler := middleware.Logging(mux, log)
+	handler := middleware.Metrics(mux)
+	handler = middleware.Logging(handler, log)
 	handler = middleware.PanicRecovery(handler, log)
 
-	server := http.Server{
-		Addr:        cfg.Web.Address,
-		ReadTimeout: cfg.Web.Timeout,
+	// Metrics server
+	metricsServer := http.Server{
+		Addr:        cfg.PromServer.Address,
+		ReadTimeout: cfg.PromServer.Timeout,
+		Handler:     promhttp.Handler(),
+	}
+
+	go func() {
+		log.Info("Metrics server started", "address", cfg.PromServer.Address)
+		if err := metricsServer.ListenAndServe(); err != nil {
+			log.Error("metrics server error", "error", err)
+		}
+	}()
+
+	// Web server
+	webServer := http.Server{
+		Addr:        cfg.WebServer.Address,
+		ReadTimeout: cfg.WebServer.Timeout,
 		Handler:     handler,
 	}
 
+	// Graceful shutdown
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	go func() {
 		<-ctx.Done()
-		log.Debug("shutting down Web server...")
+		var wg sync.WaitGroup
 
-		ctxTimeout, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-		if err := server.Shutdown(ctxTimeout); err != nil {
-			log.Error("erroneous shutdown", "error", err)
-			return
-		}
-		log.Debug("Web server stopped gracefully")
+		// Stop Metrics server
+		wg.Go(func() {
+			ctxTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			log.Debug("Stopping Metrics server...")
+			if err := metricsServer.Shutdown(ctxTimeout); err != nil {
+				log.Error("metrics shutdown error", "error", err)
+			} else {
+				log.Debug("Metrics server stopped")
+			}
+		})
+
+		// Stop Web server
+		wg.Go(func() {
+			ctxTimeout, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			log.Debug("Stopping Web server...")
+			if err := webServer.Shutdown(ctxTimeout); err != nil {
+				log.Error("web shutdown error", "error", err)
+			} else {
+				log.Debug("Web server stopped")
+			}
+		})
+
+		wg.Wait()
+		log.Debug("All servers stopped")
 	}()
 
-	log.Info("Running Web server", "address", cfg.Web.Address)
-	if err := server.ListenAndServe(); err != nil {
+	log.Info("Web server started", "address", cfg.WebServer.Address)
+	if err := webServer.ListenAndServe(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
 			return fmt.Errorf("server closed unexpectedly: %w", err)
 		}

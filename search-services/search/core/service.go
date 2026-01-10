@@ -10,9 +10,12 @@ import (
 )
 
 type Service struct {
-	log   *slog.Logger
+	log     *slog.Logger
+	metrics MetricsCollector
+
 	db    DB
 	words Words
+
 	index map[string][]int64
 	lock  sync.RWMutex
 }
@@ -24,12 +27,17 @@ type comicRank struct {
 }
 
 func NewService(
-	log *slog.Logger, db DB, words Words) (*Service, error) {
+	log *slog.Logger, metrics MetricsCollector, db DB, words Words,
+) (*Service, error) {
+	if metrics == nil {
+		metrics = &NoopMetricsCollector{}
+	}
 	return &Service{
-		log:   log,
-		db:    db,
-		words: words,
-		index: map[string][]int64{},
+		log:     log,
+		metrics: metrics,
+		db:      db,
+		words:   words,
+		index:   map[string][]int64{},
 	}, nil
 }
 
@@ -184,6 +192,10 @@ func (s *Service) UpdateIndex(ctx context.Context) error {
 			s.index[keyword] = append(s.index[keyword], comicInfo.ID)
 		}
 	}
+
+	// обновление метрик
+	s.metrics.SetIndexSize(int64(len(s.index)))
+	s.metrics.SetIndexLastUpdateTimestamp()
 	return nil
 }
 
@@ -192,6 +204,10 @@ func (s *Service) ResetIndex() {
 	defer s.lock.Unlock()
 	clear(s.index)
 	s.log.Info("index has been reset")
+
+	// обновление метрик
+	s.metrics.SetIndexSize(0)
+	s.metrics.SetIndexLastUpdateTimestamp()
 }
 
 func (s *Service) HandleEvent(ctx context.Context, eventType EventType) error {

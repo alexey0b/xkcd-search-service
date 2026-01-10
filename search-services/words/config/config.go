@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	LogLevel string `yaml:"log_level" env:"LOG_LEVEL" env-default:"DEBUG"`
-	Address  string `yaml:"words_address" env:"WORDS_ADDRESS" env-default:"80"`
+	Address  string `yaml:"words_address" env:"WORDS_ADDRESS" env-default:":80"`
 }
 
 func MustLoad(configPath string, cfg *Config) {

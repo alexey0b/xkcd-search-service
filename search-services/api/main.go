@@ -16,8 +16,11 @@ import (
 	"search-service/api/adapters/words"
 	"search-service/api/config"
 	"search-service/api/core"
+	"sync"
 	"syscall"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -38,7 +41,6 @@ func main() {
 }
 
 func run(cfg config.Config, log *slog.Logger) error {
-	log.Info("starting api server")
 	log.Debug("debug messages are enabled")
 
 	// Update adapter
@@ -95,33 +97,69 @@ func run(cfg config.Config, log *slog.Logger) error {
 		}),
 	)
 
-	handler := middleware.Logging(mux, log)
+	handler := middleware.Metrics(mux)
+	handler = middleware.Logging(handler, log)
 	handler = middleware.PanicRecovery(handler, log)
 
-	server := http.Server{
-		Addr:        cfg.ApiConfig.Address,
-		ReadTimeout: cfg.ApiConfig.Timeout,
+	// Metrics server
+	metricsServer := http.Server{
+		Addr:        cfg.PromServer.Address,
+		ReadTimeout: cfg.PromServer.Timeout,
+		Handler:     promhttp.Handler(),
+	}
+
+	go func() {
+		log.Info("Metrics server started", "address", cfg.PromServer.Address)
+		if err := metricsServer.ListenAndServe(); err != nil {
+			log.Error("metrics server error", "error", err)
+		}
+	}()
+
+	// API server
+	apiServer := http.Server{
+		Addr:        cfg.ApiServer.Address,
+		ReadTimeout: cfg.ApiServer.Timeout,
 		Handler:     handler,
 	}
 
+	// Graceful shutdown
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	go func() {
 		<-ctx.Done()
-		log.Debug("shutting down Api server...")
+		var wg sync.WaitGroup
 
-		ctxTimeout, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-		if err := server.Shutdown(ctxTimeout); err != nil {
-			log.Error("erroneous shutdown", "error", err)
-			return
-		}
-		log.Debug("Api server stopped gracefully")
+		// Stop Metrics server
+		wg.Go(func() {
+			ctxTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			log.Debug("Stopping Metrics server...")
+			if err := metricsServer.Shutdown(ctxTimeout); err != nil {
+				log.Error("metrics shutdown error", "error", err)
+			} else {
+				log.Debug("Metrics server stopped")
+			}
+		})
+
+		// Stop API server
+		wg.Go(func() {
+			ctxTimeout, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			log.Debug("Stopping API server...")
+			if err := apiServer.Shutdown(ctxTimeout); err != nil {
+				log.Error("api shutdown error", "error", err)
+			} else {
+				log.Debug("API server stopped")
+			}
+		})
+
+		wg.Wait()
+		log.Debug("All servers stopped")
 	}()
 
-	log.Info("Running Api server", "address", cfg.ApiConfig.Address)
-	if err := server.ListenAndServe(); err != nil {
+	log.Info("API server started", "address", cfg.ApiServer.Address)
+	if err := apiServer.ListenAndServe(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
 			return fmt.Errorf("server closed unexpectedly: %w", err)
 		}

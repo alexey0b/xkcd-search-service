@@ -6,19 +6,23 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	updatepb "search-service/proto/update"
 	"search-service/update/adapters/db"
 	updategrpc "search-service/update/adapters/grpc"
+	"search-service/update/adapters/metrics"
 	"search-service/update/adapters/publisher"
 	"search-service/update/adapters/words"
 	"search-service/update/adapters/xkcd"
 	"search-service/update/config"
 	"search-service/update/core"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -41,7 +45,6 @@ func main() {
 }
 
 func run(cfg config.Config, log *slog.Logger) error {
-	log.Info("starting Update service...")
 	log.Debug("debug messages are enabled")
 
 	// Database adapter
@@ -75,14 +78,31 @@ func run(cfg config.Config, log *slog.Logger) error {
 	}
 	defer publisher.Close()
 
+	// Metrics adapter
+	promCollector := metrics.NewPrometheusCollector()
+
 	// Service
-	updater, err := core.NewService(log, storage, xkcd, words, publisher, cfg.XKCD.Concurrency)
+	updater, err := core.NewService(log, promCollector, storage, xkcd, words, publisher, cfg.XKCD.Concurrency)
 	if err != nil {
 		return fmt.Errorf("failed create Update service: %v", err)
 	}
 
+	// Metrics server
+	metricsServer := http.Server{
+		Addr:        cfg.PromServer.Address,
+		ReadTimeout: cfg.PromServer.Timeout,
+		Handler:     promhttp.Handler(),
+	}
+
+	go func() {
+		log.Info("Metrics server started", "address", cfg.PromServer.Address)
+		if err := metricsServer.ListenAndServe(); err != nil {
+			log.Error("metrics server error", "error", err)
+		}
+	}()
+
 	// gRPC server
-	listener, err := net.Listen("tcp", cfg.Address)
+	listener, err := net.Listen("tcp", cfg.UpdateAddress)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
@@ -94,26 +114,45 @@ func run(cfg config.Config, log *slog.Logger) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
+	// Graceful shutdown
 	go func() {
 		<-ctx.Done()
-		log.Debug("shutting down Update service...")
+		var wg sync.WaitGroup
 
-		done := make(chan struct{})
-		go func() {
-			s.GracefulStop()
-			close(done)
-		}()
+		// Stop Metrics server
+		wg.Go(func() {
+			ctxTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			log.Debug("Stopping Metrics server...")
+			if err := metricsServer.Shutdown(ctxTimeout); err != nil {
+				log.Error("metrics shutdown error", "error", err)
+			} else {
+				log.Debug("Metrics server stopped")
+			}
+		})
 
-		select {
-		case <-done:
-			log.Debug("Update service stopped gracefully")
-		case <-time.After(30 * time.Second):
-			log.Debug("Update service forcing shutdown")
-			s.Stop()
-		}
+		// Stop gRPC server
+		wg.Go(func() {
+			log.Debug("Stopping gRPC server...")
+			done := make(chan struct{})
+			go func() {
+				s.GracefulStop()
+				close(done)
+			}()
+			select {
+			case <-done:
+				log.Debug("gRPC server stopped")
+			case <-time.After(30 * time.Second):
+				log.Debug("gRPC server forcing shutdown")
+				s.Stop()
+			}
+		})
+
+		wg.Wait()
+		log.Debug("All servers stopped")
 	}()
 
-	log.Info("Update service started", "address", cfg.Address, "log_level", cfg.LogLevel)
+	log.Info("Update server started", "address", cfg.UpdateAddress, "log_level", cfg.LogLevel)
 	if err := s.Serve(listener); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
 	}

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: update-deployment
+  namespace: search-service
+  labels:
+    app: update
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: update
+  template:
+    metadata:
+      labels:
+        app: update
+    spec:
+      containers:
+        - name: update
+          image: update:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8082
+              name: grpc
+            - containerPort: 2115
+              name: metrics
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          envFrom:
+            - configMapRef:
+                name: update-config

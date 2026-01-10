@@ -8,5 +8,9 @@ spec:
   selector:
     app: search
   ports:
-  - port: 8083
-    targetPort: 8083
+    - name: grpc
+      port: 8083
+      targetPort: 8083
+    - name: metrics
+      port: 2114
+      targetPort: 2114

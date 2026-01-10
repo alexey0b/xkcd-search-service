@@ -12,6 +12,7 @@ package core
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -313,4 +314,64 @@ func (m *MockPublisher) Publish(event EventType) error {
 func (mr *MockPublisherMockRecorder) Publish(event any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockPublisher)(nil).Publish), event)
+}
+
+// MockMetricsCollector is a mock of MetricsCollector interface.
+type MockMetricsCollector struct {
+	ctrl     *gomock.Controller
+	recorder *MockMetricsCollectorMockRecorder
+	isgomock struct{}
+}
+
+// MockMetricsCollectorMockRecorder is the mock recorder for MockMetricsCollector.
+type MockMetricsCollectorMockRecorder struct {
+	mock *MockMetricsCollector
+}
+
+// NewMockMetricsCollector creates a new mock instance.
+func NewMockMetricsCollector(ctrl *gomock.Controller) *MockMetricsCollector {
+	mock := &MockMetricsCollector{ctrl: ctrl}
+	mock.recorder = &MockMetricsCollectorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMetricsCollector) EXPECT() *MockMetricsCollectorMockRecorder {
+	return m.recorder
+}
+
+// SetComicsFetched mocks base method.
+func (m *MockMetricsCollector) SetComicsFetched(count int64) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetComicsFetched", count)
+}
+
+// SetComicsFetched indicates an expected call of SetComicsFetched.
+func (mr *MockMetricsCollectorMockRecorder) SetComicsFetched(count any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetComicsFetched", reflect.TypeOf((*MockMetricsCollector)(nil).SetComicsFetched), count)
+}
+
+// SetLastUpdateDuration mocks base method.
+func (m *MockMetricsCollector) SetLastUpdateDuration(duration time.Duration) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetLastUpdateDuration", duration)
+}
+
+// SetLastUpdateDuration indicates an expected call of SetLastUpdateDuration.
+func (mr *MockMetricsCollectorMockRecorder) SetLastUpdateDuration(duration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLastUpdateDuration", reflect.TypeOf((*MockMetricsCollector)(nil).SetLastUpdateDuration), duration)
+}
+
+// SetLastUpdateTimestamp mocks base method.
+func (m *MockMetricsCollector) SetLastUpdateTimestamp() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetLastUpdateTimestamp")
+}
+
+// SetLastUpdateTimestamp indicates an expected call of SetLastUpdateTimestamp.
+func (mr *MockMetricsCollectorMockRecorder) SetLastUpdateTimestamp() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLastUpdateTimestamp", reflect.TypeOf((*MockMetricsCollector)(nil).SetLastUpdateTimestamp))
 }

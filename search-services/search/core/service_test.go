@@ -129,7 +129,7 @@ func TestSearch(t *testing.T) {
 
 			tc.prepare(mockDB, mockWords)
 
-			service, err := core.NewService(slog.Default(), mockDB, mockWords)
+			service, err := core.NewService(slog.Default(), nil, mockDB, mockWords)
 			require.NoError(t, err)
 
 			comics, err := service.Search(context.TODO(), tc.phrase, tc.limit)
@@ -224,7 +224,7 @@ func TestISearch(t *testing.T) {
 
 			tc.prepare(mockDB, mockWords)
 
-			service, err := core.NewService(slog.Default(), mockDB, mockWords)
+			service, err := core.NewService(slog.Default(), nil, mockDB, mockWords)
 			require.NoError(t, err)
 
 			comics, err := service.ISearch(context.TODO(), tc.phrase, tc.limit)
@@ -278,7 +278,7 @@ func TestUpdateIndex(t *testing.T) {
 
 			tc.prepare(mockDB)
 
-			service, err := core.NewService(slog.Default(), mockDB, mockWords)
+			service, err := core.NewService(slog.Default(), nil, mockDB, mockWords)
 			require.NoError(t, err)
 
 			err = service.UpdateIndex(context.TODO())
@@ -339,7 +339,7 @@ func TestHandleEvent(t *testing.T) {
 
 			tc.prepare(mockDB)
 
-			service, err := core.NewService(slog.Default(), mockDB, mockWords)
+			service, err := core.NewService(slog.Default(), nil, mockDB, mockWords)
 			require.NoError(t, err)
 
 			err = service.HandleEvent(context.TODO(), tc.event)

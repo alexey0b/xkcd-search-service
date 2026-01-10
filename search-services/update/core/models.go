@@ -3,8 +3,8 @@ package core
 type ServiceStatus string
 
 const (
-	StatusRunning ServiceStatus = "running"
 	StatusIdle    ServiceStatus = "idle"
+	StatusRunning ServiceStatus = "running"
 )
 
 type EventType string

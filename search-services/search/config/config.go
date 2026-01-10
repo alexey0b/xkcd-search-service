@@ -12,13 +12,21 @@ type Broker struct {
 	Subject string `yaml:"topic" env:"BROKER_SUBJECT" env-default:"xkcd.db.updated"`
 }
 
+type PromConfig struct {
+	Address string        `yaml:"address" env:"PROMETHEUS_ADDRESS" env-default:":2114"`
+	Timeout time.Duration `yaml:"timeout" env:"PROMETHEUS_TIMEOUT" env-default:"5s"`
+}
+
 type Config struct {
-	LogLevel     string        `yaml:"log_level" env:"LOG_LEVEL" env-default:"DEBUG"`
-	IndexTTL     time.Duration `yaml:"index_ttl" env:"INDEX_TTL" env-default:"20s"`
-	Address      string        `yaml:"search_address" env:"SEARCH_ADDRESS" env-default:"localhost:83"`
-	DBAddress    string        `yaml:"db_address" env:"DB_ADDRESS" env-default:"postgres://postgres:password@postgres:5432/postgres"`
-	WordsAddress string        `yaml:"words_address" env:"WORDS_ADDRESS" env-default:"localhost:81"`
-	Broker       Broker        `yaml:"broker"`
+	LogLevel string        `yaml:"log_level" env:"LOG_LEVEL" env-default:"DEBUG"`
+	IndexTTL time.Duration `yaml:"index_ttl" env:"INDEX_TTL" env-default:"20s"`
+
+	SearchAddress string `yaml:"search_address" env:"SEARCH_ADDRESS" env-default:":83"`
+	WordsAddress  string `yaml:"words_address" env:"WORDS_ADDRESS" env-default:":81"`
+	DBAddress     string `yaml:"db_address" env:"DB_ADDRESS" env-default:"postgres://postgres:password@postgres:5432/postgres"`
+
+	Broker     Broker     `yaml:"broker"`
+	PromServer PromConfig `yaml:"prom_server"`
 }
 
 func MustLoad(configPath string, cfg *Config) {

@@ -8,5 +8,9 @@ spec:
   selector:
     app: frontend
   ports:
-  - port: 3000
-    targetPort: 3000
+    - name: http
+      port: 3000
+      targetPort: 3000
+    - name: metrics
+      port: 2112
+      targetPort: 2112

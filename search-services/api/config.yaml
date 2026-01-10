@@ -7,6 +7,10 @@ api_server:
   address: :8080
   timeout: 5s
 
+prom_server:
+  address: :2113
+  timeout: 5s
+
 limits:
   search_concurrency: 10
   search_rate: 100

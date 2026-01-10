@@ -119,7 +119,7 @@ func TestUpdate(t *testing.T) {
 
 			tc.prepare(mockDB, mockXKCD, mockWords, mockPublisher)
 
-			service, err := core.NewService(slog.Default(), mockDB, mockXKCD, mockWords, mockPublisher, concurrency)
+			service, err := core.NewService(slog.Default(), nil, mockDB, mockXKCD, mockWords, mockPublisher, concurrency)
 			require.NoError(t, err)
 
 			err = service.Update(context.TODO())
@@ -228,7 +228,7 @@ func TestStats(t *testing.T) {
 
 			tc.prepare(mockDB, mockXKCD)
 
-			service, err := core.NewService(slog.Default(), mockDB, mockXKCD, mockWords, mockPublisher, concurrency)
+			service, err := core.NewService(slog.Default(), nil, mockDB, mockXKCD, mockWords, mockPublisher, concurrency)
 			require.NoError(t, err)
 
 			stats, err := service.Stats(context.TODO())
@@ -267,7 +267,7 @@ func TestStatus(t *testing.T) {
 			mockWords := core.NewMockWords(ctrl)
 			mockPublisher := core.NewMockPublisher(ctrl)
 
-			service, err := core.NewService(slog.Default(), mockDB, mockXKCD, mockWords, mockPublisher, concurrency)
+			service, err := core.NewService(slog.Default(), nil, mockDB, mockXKCD, mockWords, mockPublisher, concurrency)
 			require.NoError(t, err)
 
 			tc.prepare(service)
@@ -321,7 +321,7 @@ func TestDrop(t *testing.T) {
 
 			tc.prepare(mockDB, mockPublisher)
 
-			service, err := core.NewService(slog.Default(), mockDB, mockXKCD, mockWords, mockPublisher, concurrency)
+			service, err := core.NewService(slog.Default(), nil, mockDB, mockXKCD, mockWords, mockPublisher, concurrency)
 			require.NoError(t, err)
 
 			err = service.Drop(context.TODO())

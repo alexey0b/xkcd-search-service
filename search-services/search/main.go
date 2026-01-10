@@ -6,19 +6,23 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	searchpb "search-service/proto/search"
 	"search-service/search/adapters/db"
 	searchgrpc "search-service/search/adapters/grpc"
+	"search-service/search/adapters/metrics"
 	"search-service/search/adapters/scheduler"
 	"search-service/search/adapters/subscriber"
 	"search-service/search/adapters/words"
 	"search-service/search/config"
 	"search-service/search/core"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -58,8 +62,11 @@ func run(cfg config.Config, log *slog.Logger) error {
 	}
 	defer words.Close()
 
+	// Metrics adapter
+	promCollector := metrics.NewPrometheusCollector()
+
 	// Service
-	searcher, err := core.NewService(log, storage, words)
+	searcher, err := core.NewService(log, promCollector, storage, words)
 	if err != nil {
 		return fmt.Errorf("failed create Search service: %w", err)
 	}
@@ -74,8 +81,22 @@ func run(cfg config.Config, log *slog.Logger) error {
 	// Searcher scheduler
 	searchSched := scheduler.NewSearcherScheduler(log, searcher, cfg.IndexTTL)
 
+	// Metrics server
+	metricsServer := http.Server{
+		Addr:        cfg.PromServer.Address,
+		ReadTimeout: cfg.PromServer.Timeout,
+		Handler:     promhttp.Handler(),
+	}
+
+	go func() {
+		log.Info("Metrics server started", "address", cfg.PromServer.Address)
+		if err := metricsServer.ListenAndServe(); err != nil {
+			log.Error("metrics server error", "error", err)
+		}
+	}()
+
 	// gRPC server
-	listener, err := net.Listen("tcp", cfg.Address)
+	listener, err := net.Listen("tcp", cfg.SearchAddress)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
@@ -91,26 +112,45 @@ func run(cfg config.Config, log *slog.Logger) error {
 		return fmt.Errorf("failed to start searcher scheduler: %w", err)
 	}
 
+	// Graceful shutdown
 	go func() {
 		<-ctx.Done()
-		log.Debug("shutting down Search service...")
+		var wg sync.WaitGroup
 
-		done := make(chan struct{})
-		go func() {
-			s.GracefulStop()
-			close(done)
-		}()
+		// Stop Metrics server
+		wg.Go(func() {
+			ctxTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			log.Debug("Stopping Metrics server...")
+			if err := metricsServer.Shutdown(ctxTimeout); err != nil {
+				log.Error("metrics shutdown error", "error", err)
+			} else {
+				log.Debug("Metrics server stopped")
+			}
+		})
 
-		select {
-		case <-done:
-			log.Debug("Search service stopped gracefully")
-		case <-time.After(30 * time.Second):
-			log.Debug("Search service forcing shutdown")
-			s.Stop()
-		}
+		// Stop gRPC server
+		wg.Go(func() {
+			log.Debug("Stopping gRPC server...")
+			done := make(chan struct{})
+			go func() {
+				s.GracefulStop()
+				close(done)
+			}()
+			select {
+			case <-done:
+				log.Debug("gRPC server stopped")
+			case <-time.After(30 * time.Second):
+				log.Debug("gRPC server forcing shutdown")
+				s.Stop()
+			}
+		})
+
+		wg.Wait()
+		log.Debug("All servers stopped")
 	}()
 
-	log.Info("Search service started", "address", cfg.Address, "log_level", cfg.LogLevel)
+	log.Info("Search server started", "address", cfg.SearchAddress, "log_level", cfg.LogLevel)
 	if err := s.Serve(listener); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)
 	}

@@ -226,3 +226,51 @@ func (mr *MockEventHandlerMockRecorder) HandleEvent(ctx, eventType any) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HandleEvent", reflect.TypeOf((*MockEventHandler)(nil).HandleEvent), ctx, eventType)
 }
+
+// MockMetricsCollector is a mock of MetricsCollector interface.
+type MockMetricsCollector struct {
+	ctrl     *gomock.Controller
+	recorder *MockMetricsCollectorMockRecorder
+	isgomock struct{}
+}
+
+// MockMetricsCollectorMockRecorder is the mock recorder for MockMetricsCollector.
+type MockMetricsCollectorMockRecorder struct {
+	mock *MockMetricsCollector
+}
+
+// NewMockMetricsCollector creates a new mock instance.
+func NewMockMetricsCollector(ctrl *gomock.Controller) *MockMetricsCollector {
+	mock := &MockMetricsCollector{ctrl: ctrl}
+	mock.recorder = &MockMetricsCollectorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMetricsCollector) EXPECT() *MockMetricsCollectorMockRecorder {
+	return m.recorder
+}
+
+// SetIndexLastUpdateTimestamp mocks base method.
+func (m *MockMetricsCollector) SetIndexLastUpdateTimestamp() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetIndexLastUpdateTimestamp")
+}
+
+// SetIndexLastUpdateTimestamp indicates an expected call of SetIndexLastUpdateTimestamp.
+func (mr *MockMetricsCollectorMockRecorder) SetIndexLastUpdateTimestamp() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetIndexLastUpdateTimestamp", reflect.TypeOf((*MockMetricsCollector)(nil).SetIndexLastUpdateTimestamp))
+}
+
+// SetIndexSize mocks base method.
+func (m *MockMetricsCollector) SetIndexSize(size int64) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetIndexSize", size)
+}
+
+// SetIndexSize indicates an expected call of SetIndexSize.
+func (mr *MockMetricsCollectorMockRecorder) SetIndexSize(size any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetIndexSize", reflect.TypeOf((*MockMetricsCollector)(nil).SetIndexSize), size)
+}

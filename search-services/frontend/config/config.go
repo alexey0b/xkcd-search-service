@@ -8,13 +8,18 @@ import (
 )
 
 type WebConfig struct {
-	Address string        `yaml:"address" env:"FRONTEND_ADDRESS" env-default:"localhost:3000"`
+	Address string        `yaml:"address" env:"FRONTEND_ADDRESS" env-default:":3000"`
 	Timeout time.Duration `yaml:"timeout" env:"FRONTEND_TIMEOUT" env-default:"10s"`
 }
 
 type ApiConfig struct {
-	ApiAddress string        `yaml:"address" env:"API_ADDRESS" env-default:"http://api:8080"`
-	Timeout    time.Duration `yaml:"timeout" env:"API_TIMEOUT" env-default:"3m"`
+	Address string        `yaml:"address" env:"API_ADDRESS" env-default:"http://api:8080"`
+	Timeout time.Duration `yaml:"timeout" env:"API_TIMEOUT" env-default:"3m"`
+}
+
+type PromConfig struct {
+	Address string        `yaml:"address" env:"PROMETHEUS_ADDRESS" env-default:":2112"`
+	Timeout time.Duration `yaml:"timeout" env:"PROMETHEUS_TIMEOUT" env-default:"5s"`
 }
 
 type AuthConfig struct {
@@ -27,9 +32,10 @@ type AuthConfig struct {
 type Config struct {
 	LogLevel string `yaml:"log_level" env:"LOG_LEVEL" env-default:"DEBUG"`
 
-	Web  WebConfig  `yaml:"web_server"`
-	Api  ApiConfig  `yaml:"api"`
-	Auth AuthConfig `yaml:"auth"`
+	WebServer  WebConfig  `yaml:"web_server"`
+	PromServer PromConfig `yaml:"prom_server"`
+	Api        ApiConfig  `yaml:"api"`
+	Auth       AuthConfig `yaml:"auth"`
 }
 
 func MustLoad(configPath string, cfg *Config) {

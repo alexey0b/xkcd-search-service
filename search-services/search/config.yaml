@@ -1,8 +1,14 @@
 log_level: DEBUG
 index_ttl: 24h
+
 search_address: localhost:8083
 words_address: localhost:8081
 db_address: postgres://postgres:password@localhost:5432/postgres?sslmode=disable
+
 broker:
   address: nats://localhost:4222
   topic: xkcd.db.updated
+
+prom_server:
+  address: :2114
+  timeout: 5s

@@ -12,6 +12,11 @@ type ApiConfig struct {
 	Timeout time.Duration `yaml:"timeout" env:"API_TIMEOUT" env-default:"5s"`
 }
 
+type PromConfig struct {
+	Address string        `yaml:"address" env:"PROMETHEUS_ADDRESS" env-default:":2113"`
+	Timeout time.Duration `yaml:"timeout" env:"PROMETHEUS_TIMEOUT" env-default:"5s"`
+}
+
 type AuthConfig struct {
 	AdminUser     string        `yaml:"admin_user" env:"ADMIN_USER" env-default:"admin"`
 	AdminPassword string        `yaml:"admin_password" env:"ADMIN_PASSWORD" env-default:"password"`
@@ -30,9 +35,10 @@ type Config struct {
 	UpdateAddress string `yaml:"update_address" env:"UPDATE_ADDRESS" env-default:"update:82"`
 	SearchAddress string `yaml:"search_address" env:"SEARCH_ADDRESS" env-default:"search:83"`
 
-	ApiConfig ApiConfig  `yaml:"api_server"`
-	Auth      AuthConfig `yaml:"auth"`
-	Limits    Limits     `yaml:"limits"`
+	ApiServer  ApiConfig  `yaml:"api_server"`
+	PromServer PromConfig `yaml:"prom_server"`
+	Auth       AuthConfig `yaml:"auth"`
+	Limits     Limits     `yaml:"limits"`
 }
 
 func MustLoad(configPath string, cfg *Config) {

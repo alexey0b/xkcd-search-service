@@ -8,5 +8,9 @@ spec:
   selector:
     app: update
   ports:
-  - port: 8082
+  - name: grpc
+    port: 8082
     targetPort: 8082
+  - name: metrics
+    port: 2115
+    targetPort: 2115
