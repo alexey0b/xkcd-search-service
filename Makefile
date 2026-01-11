@@ -89,6 +89,10 @@ integration-tests:
 	make clean
 	@echo "test finished"
 
+.PHONY: clean-test
+clean-test:
+	go clean -testcache
+
 # Code Quality Commands
 
 .PHONY: lint

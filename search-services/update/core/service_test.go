@@ -38,11 +38,14 @@ func TestUpdate(t *testing.T) {
 				xkcd.EXPECT().Get(gomock.Any(), int64(3)).Return(core.XKCDInfo{ID: 3, Title: "New"}, nil)
 				xkcd.EXPECT().Get(gomock.Any(), int64(4)).Return(core.XKCDInfo{ID: 4, Title: "Newer"}, nil)
 				words.EXPECT().Norm(gomock.Any(), gomock.Any()).Return([]string{"new", "comic"}, nil).Times(2)
-				db.EXPECT().Add(gomock.Any(), []core.Comic{
-					{ID: int64(3), Words: []string{"new", "comic"}},
-					{ID: int64(4), Words: []string{"new", "comic"}},
-				}).
-					Return(nil)
+				db.EXPECT().Add(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, comics ...core.Comic) error {
+					require.Len(t, comics, 2)
+					require.ElementsMatch(t, comics, []core.Comic{
+						{ID: int64(3), Words: []string{"new", "comic"}},
+						{ID: int64(4), Words: []string{"new", "comic"}},
+					})
+					return nil
+				})
 				publisher.EXPECT().Publish(core.EventUpdate).Return(nil)
 			},
 			wantErr: false,
@@ -70,10 +73,14 @@ func TestUpdate(t *testing.T) {
 				xkcd.EXPECT().Get(gomock.Any(), int64(1)).Return(core.XKCDInfo{ID: 1}, nil)
 				xkcd.EXPECT().Get(gomock.Any(), int64(2)).Return(core.XKCDInfo{ID: 2}, nil)
 				words.EXPECT().Norm(gomock.Any(), gomock.Any()).Return([]string{"test"}, nil).Times(2)
-				db.EXPECT().Add(gomock.Any(), []core.Comic{
-					{ID: int64(1), Words: []string{"test"}},
-					{ID: int64(2), Words: []string{"test"}},
-				}).Return(errors.New("add error"))
+				db.EXPECT().Add(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, comics ...core.Comic) error {
+					require.Len(t, comics, 2)
+					require.ElementsMatch(t, comics, []core.Comic{
+						{ID: int64(1), Words: []string{"test"}},
+						{ID: int64(2), Words: []string{"test"}},
+					})
+					return errors.New("add error")
+				})
 			},
 			wantErr: true,
 		},
@@ -84,7 +91,11 @@ func TestUpdate(t *testing.T) {
 				xkcd.EXPECT().LastID(gomock.Any()).Return(int64(1), nil)
 				xkcd.EXPECT().Get(gomock.Any(), int64(1)).Return(core.XKCDInfo{ID: 1}, nil)
 				words.EXPECT().Norm(gomock.Any(), gomock.Any()).Return([]string{"test"}, nil)
-				db.EXPECT().Add(gomock.Any(), []core.Comic{{ID: int64(1), Words: []string{"test"}}}).Return(nil)
+				db.EXPECT().Add(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, comics ...core.Comic) error {
+					require.Len(t, comics, 1)
+					require.ElementsMatch(t, comics, []core.Comic{{ID: int64(1), Words: []string{"test"}}})
+					return nil
+				})
 				pub.EXPECT().Publish(core.EventUpdate).Return(errors.New("publish error"))
 			},
 			wantErr: false,
@@ -100,7 +111,11 @@ func TestUpdate(t *testing.T) {
 				words.EXPECT().Norm(gomock.Any(), gomock.Any()).Return(nil, errors.New("normalization error"))
 
 				// Добавляется только 1 комикс (второй пропущен из-за ошибки)
-				db.EXPECT().Add(gomock.Any(), []core.Comic{{ID: int64(1), Words: []string{"first"}}}).Return(nil)
+				db.EXPECT().Add(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, comics ...core.Comic) error {
+					require.Len(t, comics, 1)
+					require.ElementsMatch(t, comics, []core.Comic{{ID: int64(1), Words: []string{"first"}}})
+					return nil
+				})
 				pub.EXPECT().Publish(core.EventUpdate).Return(nil)
 			},
 			wantErr: false,

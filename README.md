@@ -93,6 +93,7 @@ make k8s-port-forward
 | ------------------------ | ------------------------- |
 | `make unit-tests`        | Запуск unit тестов        |
 | `make integration-tests` | Запуск integration тестов |
+| `make clean-test`        | Очистить кеш тестов       |
 
 ---
 
