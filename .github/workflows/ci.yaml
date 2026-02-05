@@ -39,6 +39,7 @@ jobs:
           make integration-tests
       - name: Run Unit Tests
         run: |
+          go install go.uber.org/mock/mockgen@latest
           make unit-tests
       - uses: coverallsapp/github-action@v2.3.6
         with:
