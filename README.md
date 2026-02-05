@@ -116,8 +116,7 @@ make k8s-port-forward
 
 ### Project Structure
 
->[!NOTE] Architectural Pattern
-> Hexagonal Architecture (Ports & Adapters)
+> ***Hexagonal Architecture*** (Ports & Adapters)
 
 ![Visualization of architecture](docs/xkcd-microservice-arch.png)
 
