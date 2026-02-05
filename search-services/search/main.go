@@ -24,6 +24,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -35,7 +37,6 @@ func main() {
 	var cfg config.Config
 	config.MustLoad(configPath, &cfg)
 
-	// Logger
 	log := mustMakeLogger(cfg.LogLevel)
 
 	if err := run(cfg, log); err != nil {
@@ -102,6 +103,10 @@ func run(cfg config.Config, log *slog.Logger) error {
 	}
 
 	s := grpc.NewServer()
+	healthcheck := health.NewServer()
+	
+	// register gRPC services
+	healthgrpc.RegisterHealthServer(s, healthcheck)
 	searchpb.RegisterSearchServer(s, searchgrpc.NewServer(searcher))
 	reflection.Register(s)
 

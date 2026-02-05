@@ -12,16 +12,19 @@ import (
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// Client is a gRPC client for the Search service.
 type Client struct {
-	log    *slog.Logger
-	conn   *grpc.ClientConn
-	client searchpb.SearchClient
+	log          *slog.Logger
+	conn         *grpc.ClientConn
+	client       searchpb.SearchClient
+	healthClient healthpb.HealthClient
 }
 
+// NewClient creates a new Search service gRPC client with exponential backoff retry.
 func NewClient(address string, log *slog.Logger) (*Client, error) {
 	conn, err := grpc.NewClient(
 		address,
@@ -39,28 +42,36 @@ func NewClient(address string, log *slog.Logger) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		log:    log,
-		conn:   conn,
-		client: searchpb.NewSearchClient(conn),
+		log:          log,
+		conn:         conn,
+		client:       searchpb.NewSearchClient(conn),
+		healthClient: healthpb.NewHealthClient(conn),
 	}, nil
 }
 
+// Close closes the gRPC connection.
 func (c *Client) Close() {
 	if err := c.conn.Close(); err != nil {
 		c.log.Warn("failed to close gRPC connection", "error", err)
 	}
 }
 
-func (c *Client) Ping(ctx context.Context) error {
-	if _, err := c.client.Ping(ctx, &emptypb.Empty{}); err != nil {
+// HealthCheck checks if the Search service is healthy and serving requests.
+func (c *Client) HealthCheck(ctx context.Context) error {
+	resp, err := c.healthClient.Check(ctx, &healthpb.HealthCheckRequest{})
+	if err != nil {
 		if status.Code(err) == codes.Unavailable {
 			return core.ErrServiceUnavailable
 		}
 		return err
 	}
+	if resp.Status != healthpb.HealthCheckResponse_SERVING {
+		return core.ErrServiceUnavailable
+	}
 	return nil
 }
 
+// Search performs exact phrase search and returns matching comics.
 func (c *Client) Search(ctx context.Context, phrase string, limite int64) ([]core.Comic, error) {
 	stream, err := c.client.Search(ctx, &searchpb.SearchRequest{Phrase: phrase, Limit: limite})
 	if err != nil {
@@ -73,10 +84,11 @@ func (c *Client) Search(ctx context.Context, phrase string, limite int64) ([]cor
 			return nil, err
 		}
 	}
-	comics, err := collectCommics(stream)
+	comics, err := collectComics(stream)
 	return comics, err
 }
 
+// ISearch performs indexed search and returns matching comics.
 func (c *Client) ISearch(ctx context.Context, phrase string, limite int64) ([]core.Comic, error) {
 	stream, err := c.client.ISearch(ctx, &searchpb.SearchRequest{Phrase: phrase, Limit: limite})
 	if err != nil {
@@ -89,11 +101,12 @@ func (c *Client) ISearch(ctx context.Context, phrase string, limite int64) ([]co
 			return nil, err
 		}
 	}
-	comics, err := collectCommics(stream)
+	comics, err := collectComics(stream)
 	return comics, err
 }
 
-func collectCommics(stream grpc.ServerStreamingClient[searchpb.SearchReply]) ([]core.Comic, error) {
+// collectComics reads all comics from the gRPC stream.
+func collectComics(stream grpc.ServerStreamingClient[searchpb.SearchReply]) ([]core.Comic, error) {
 	var comics []core.Comic
 	for {
 		reply, err := stream.Recv()

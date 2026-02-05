@@ -3,161 +3,163 @@
 
 # XKCD Comics Search Service
 
-## Описание проекта
+## Project Description
 
-Веб-интерфейс для поискового сервиса комиксов [XKCD](https://xkcd.com/). Проект представляет собой микросервисную архитектуру, предоставляющим пользователям возможность поиска комиксов по ключевым словам через веб-интерфейс.
-
----
-
-## Возможности
-
-### Для пользователей
-
-- 🔍 **Поиск комиксов** по ключевым словам
-- 🖼️ **Просмотр результатов** с превью изображений
-
-### Для администраторов
-
-- 🔐 **JWT-авторизация** с автоматическим редиректом при истечении токена
-- 📊 **Статистика** - количество комиксов, слов, индексированных данных
-- 🔄 **Обновление БД** - загрузка новых комиксов из XKCD API
-- 🗑️ **Очистка БД** - полное удаление данных
-- 📈 **Мониторинг статуса** - отслеживание процесса обновления
+Web interface for [XKCD](https://xkcd.com/) comics search service. The project implements a microservices architecture that provides users with the ability to search for comics by keywords through a web interface.
 
 ---
 
-## Быстрый стартa
+## Features
+
+### For Users
+
+- 🔍 **Search comics** by keywords
+- 🖼️ **View results** with image previews
+
+---
+
+### For Administrators
+
+- 🔐 **JWT authentication** with automatic redirect on token expiration
+- 📊 **Statistics** - number of comics, words, indexed data
+- 🔄 **Database update** - fetch new comics from XKCD API
+- 🗑️ **Database cleanup** - complete data removal
+- 📈 **Status monitoring** - track update process
+
+---
+
+## Quick Start
 
 ### Docker Compose
 
 ```bash
-# Запуск всех сервисов
+# Start all services
 make up
 
-# Доступ
+# Access
 http://localhost:23000
 ```
+
+---
 
 ### Kubernetes (Minikube)
 
 ```bash
-# Инициализация Minikube с CNI
+# Initialize Minikube with CNI
 make k8s-init
 
-# Развертывание приложения
+# Deploy application
 make k8s-start
 
-# Port-forward для доступа (в отдельном терминале)
+# Port-forward for access (in separate terminal)
 make k8s-port-forward
 ```
 
 ---
 
-## Команды Makefile
+## Makefile Commands
 
 ### Docker Compose
 
-| Команда             | Описание                       |
+| Command             | Description                    |
 | ------------------- | ------------------------------ |
-| `make build-images` | Собрать Docker образы          |
-| `make up`           | Запустить все сервисы          |
-| `make down`         | Остановить сервисы             |
-| `make clean`        | Остановить и удалить volumes   |
-| `make test`         | Запустить интеграционные тесты |
+| `make build-images` | Build Docker images            |
+| `make up`           | Start all services             |
+| `make down`         | Stop services                  |
+| `make clean`        | Stop and remove volumes        |
+| `make test`         | Run integration tests          |
+
+---
 
 ### Kubernetes
 
-| Команда                 | Описание                        |
-| ----------------------- | ------------------------------- |
-| `make k8s-init`         | Инициализировать Minikube с CNI |
-| `make k8s-start`        | Развернуть приложение в K8s     |
-| `make k8s-delete`       | Удалить все ресурсы             |
-| `make k8s-restart`      | Пересоздать все ресурсы         |
-| `make k8s-port-forward` | Пробросить порт Ingress         |
-| `make k8s-dashboard`    | Открыть Kubernetes Dashboard    |
-| `make k8s-prometheus-ui`| Открыть Prometheus UI           |
-| `make k8s-stop`         | Остановить Minikube             |
-| `make k8s-clean`        | Удалить Minikube кластер        |
-
-### Качество кода
-
-| Команда         | Описание              |
-| --------------- | --------------------- |
-| `make lint`     | Запустить линтеры     |
-| `make cover`    | Покрытие кода тестами |
-| `make security` | Проверка безопасности |
-
-### Тестирование
-
-| Команда                  | Описание                  |
-| ------------------------ | ------------------------- |
-| `make unit-tests`        | Запуск unit тестов        |
-| `make integration-tests` | Запуск integration тестов |
-| `make clean-test`        | Очистить кеш тестов       |
+| Command                  | Description                    |
+| ------------------------ | ------------------------------ |
+| `make k8s-init`          | Initialize Minikube with CNI   |
+| `make k8s-start`         | Deploy application to K8s      |
+| `make k8s-delete`        | Delete all resources           |
+| `make k8s-restart`       | Recreate all resources         |
+| `make k8s-port-forward`  | Forward Ingress port           |
+| `make k8s-dashboard`     | Open Kubernetes Dashboard      |
+| `make k8s-prometheus-ui` | Open Prometheus UI             |
+| `make k8s-stop`          | Stop Minikube                  |
+| `make k8s-clean`         | Delete Minikube cluster        |
 
 ---
 
-## Демонстрация
+### Code Quality
 
-🎥 ![Демонстрация](docs/demo.gif)
-
-### Скриншоты
-
-- **Авторизация для админа**
-
-![Авторизация](docs/screenshots/admin-login.png)
-
-- **Админ-панель**
-
-![Статистика и управление](docs/screenshots/admin-panel.png)
-
-- **Страница поиска**
-
-![Страница поиска](docs/screenshots/search-page.png)
+| Command      | Description           |
+| ------------ | --------------------- |
+| `make lint`  | Run linters           |
+| `make cover` | Code coverage report  |
 
 ---
 
-## Архитектура проекта
+### Testing
 
-### Структура проекта
+| Command                  | Description              |
+| ------------------------ | ------------------------ |
+| `make unit-tests`        | Run unit tests           |
+| `make integration-tests` | Run integration tests    |
+| `make clean-test`        | Clean test cache         |
 
-> **Архитектурный паттерн:** Hexagonal Architecture (Ports & Adapters)
+---
+
+## Demo
+
+🎥 ![Demo](docs/demo.gif)
+
+---
+
+## Project Architecture
+
+### Project Structure
+
+>[!NOTE] Architectural Pattern
+> Hexagonal Architecture (Ports & Adapters)
+
+![Visualization of architecture](docs/xkcd-microservice-arch.png)
 
 ```
 xkcd-search-service/
-├── search-services/              # Микросервисы (Go)
-│   ├── frontend/                 # Веб-интерфейс (SSR, JWT, embedded files)
+├── search-services/              # Microservices (Go)
+│   ├── frontend/                 # Web interface (SSR, JWT, embedded files)
 │   ├── api/                      # API Gateway (REST → gRPC)
-│   ├── search/                   # Поиск (PostgreSQL, NATS subscriber)
-│   ├── update/                   # Обновление (XKCD API, NATS publisher)
-│   ├── words/                    # Индексация (стемминг Snowball)
+│   ├── search/                   # Search service (PostgreSQL, NATS subscriber)
+│   ├── update/                   # Update service (XKCD API, NATS publisher)
+│   ├── words/                    # Indexing service (Snowball stemming)
 │   └── proto/                    # gRPC Protocol Buffers
 ├── infrastructure/
-│   ├── k8s/                      # Kubernetes манифесты
+│   ├── k8s/                      # Kubernetes manifests
 │   │   ├── namespace.yaml
-│   │   ├── configmaps/           # ConfigMaps для сервисов
-│   │   ├── deployments/          # Deployments всех сервисов
-│   │   └── services/             # Services для доступа к подам
+│   │   ├── configmaps/           # ConfigMaps for services
+│   │   ├── deployments/          # Deployments for all services
+│   │   └── services/             # Services for pod access
 │   └── prometheus/
-│       └── prometheus.yaml       # Конфигурация Prometheus для Docker Compose
-├── tests/                        # Интеграционные тесты (testcontainers)
-├── docs/                         # Документация и скриншоты
-├── compose.yaml                  # Docker Compose конфигурация
-└── Makefile                      # Автоматизация сборки и развертывания
+│       └── prometheus.yaml       # Prometheus config for Docker Compose
+├── tests/                        # Integration tests (testcontainers)
+├── docs/                         # Documentation and screenshots
+├── compose.yaml                  # Docker Compose configuration
+└── Makefile                      # Build and deployment automation
 ```
 
-### Микросервисы
+---
 
-- **Frontend** - веб-интерфейс с HTML-шаблонами, JWT-авторизацией, Prometheus метриками
-- **API** - API Gateway для маршрутизации REST запросов к gRPC сервисам, Prometheus метрики
-- **Search** - сервис полнотекстового поиска с in-memory индексом, NATS subscriber, Prometheus метрики
-- **Update** - сервис обновления БД комиксов из XKCD API, NATS publisher, Prometheus метрики
-- **Words** - сервис индексации и нормализации слов (стемминг Snowball)
-- **PostgreSQL** - реляционное хранилище данных
-- **NATS** - брокер сообщений для событийной архитектуры
-- **Prometheus** - система мониторинга и сбора метрик
+### Microservices
 
-### Технологии
+- **Frontend** - web interface with HTML templates, JWT authentication, Prometheus metrics
+- **API** - API Gateway for routing REST requests to gRPC services, Prometheus metrics
+- **Search** - full-text search service with in-memory index, NATS subscriber, Prometheus metrics
+- **Update** - database update service from XKCD API, NATS publisher, Prometheus metrics
+- **Words** - word indexing and normalization service (Snowball stemming)
+- **PostgreSQL** - relational data storage
+- **NATS** - message broker for event-driven architecture
+- **Prometheus** - monitoring and metrics collection system
+
+---
+
+### Technologies
 
 - **Backend**: Go 1.23+
 - **Frontend**: HTML, CSS, JavaScript
@@ -166,14 +168,16 @@ xkcd-search-service/
 - **Monitoring**: Prometheus 3.8.0
 - **Orchestration**: Docker Compose, Kubernetes (Minikube)
 
-**Основные библиотеки:**
+---
 
-- [golang-jwt/jwt](https://github.com/golang-jwt/jwt) - JWT авторизация
-- [jackc/pgx](https://github.com/jackc/pgx) - PostgreSQL драйвер и toolkit
-- [jmoiron/sqlx](https://github.com/jmoiron/sqlx) - SQL расширения
-- [nats-io/nats.go](https://github.com/nats-io/nats.go) - NATS клиент
-- [golang-migrate/migrate](https://github.com/golang-migrate/migrate) - миграции БД
-- [kljensen/snowball](https://github.com/kljensen/snowball) - стемминг для индексации
-- [grpc/grpc-go](https://github.com/grpc/grpc-go) - gRPC фреймворк
-- [prometheus/client_golang](https://github.com/prometheus/client_golang) - Prometheus метрики
-- [testcontainers-go](https://github.com/testcontainers/testcontainers-go) - интеграционное тестирование
+- [golang-jwt/jwt](https://github.com/golang-jwt/jwt) - JWT authentication
+- [jackc/pgx](https://github.com/jackc/pgx) - PostgreSQL driver and toolkit
+- [jmoiron/sqlx](https://github.com/jmoiron/sqlx) - SQL extensions
+- [nats-io/nats.go](https://github.com/nats-io/nats.go) - NATS client
+- [golang-migrate/migrate](https://github.com/golang-migrate/migrate) - database migrations
+- [kljensen/snowball](https://github.com/kljensen/snowball) - stemming for indexing
+- [grpc/grpc-go](https://github.com/grpc/grpc-go) - gRPC framework
+- [prometheus/client_golang](https://github.com/prometheus/client_golang) - Prometheus metrics
+- [testcontainers-go](https://github.com/testcontainers/testcontainers-go) - integration testing
+
+---

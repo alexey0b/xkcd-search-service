@@ -14,10 +14,10 @@ import (
 
 const (
 	paramPhrase = "phrase"
-
-	cookieName = "jwt_token"
+	cookieName  = "jwt_token"
 )
 
+// encodeReply encodes response as indented JSON.
 func encodeReply(w io.Writer, reply any) error {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
@@ -27,30 +27,12 @@ func encodeReply(w io.Writer, reply any) error {
 	return nil
 }
 
+// NewHealthHandler creates HTTP handler for health check endpoint.
 func NewHealthHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {}
 }
 
-func NewPingHandler(log *slog.Logger, pinger core.Pinger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		reply, err := pinger.Ping(r.Context())
-		if err != nil {
-			if errors.Is(err, core.ErrServiceUnavailable) {
-				log.Debug("ping endpoint unavailable")
-				http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
-			} else {
-				log.Warn("ping endpoint failed", "error", err)
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		if err := encodeReply(w, reply); err != nil {
-			log.Error("cannot encode reply", "error", err)
-		}
-	}
-}
-
+// NewLoginHandler creates HTTP handler for authentication endpoint.
 func NewLoginHandler(log *slog.Logger, auth core.Authenticator, tokenTTL time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var login struct {
@@ -73,6 +55,7 @@ func NewLoginHandler(log *slog.Logger, auth core.Authenticator, tokenTTL time.Du
 			return
 		}
 
+		// set JWT token as HttpOnly cookie for security
 		cookie := &http.Cookie{
 			Name:     cookieName,
 			Value:    tokenString,
@@ -85,6 +68,8 @@ func NewLoginHandler(log *slog.Logger, auth core.Authenticator, tokenTTL time.Du
 	}
 }
 
+// NewSearchHandler creates HTTP handler for search endpoint.
+// Performs indexed search and returns matching comics as JSON.
 func NewSearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		phrase := r.URL.Query().Get(paramPhrase)
@@ -113,11 +98,14 @@ func NewSearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFunc
 	}
 }
 
+// statistics combines database stats and update status for admin panel.
 type statistics struct {
 	Stats  core.UpdateStats  `json:"stats"`
 	Status core.UpdateStatus `json:"status"`
 }
 
+// NewStatisticsHandler creates HTTP handler for statistics endpoint.
+// Returns combined database statistics and update process status.
 func NewStatisticsHandler(log *slog.Logger, statsProvider core.UpdateStatsProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		stats, err := statsProvider.GetUpdateStats(r.Context())
@@ -153,6 +141,7 @@ func NewStatisticsHandler(log *slog.Logger, statsProvider core.UpdateStatsProvid
 	}
 }
 
+// NewUpdateHandler creates HTTP handler to trigger database update.
 func NewUpdateHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := updater.Update(r.Context()); err != nil {
@@ -171,6 +160,8 @@ func NewUpdateHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	}
 }
 
+// NewDropHandler creates HTTP handler to drop all database data.
+// Removes all comics and indexed words from the database.
 func NewDropHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := updater.Drop(r.Context()); err != nil {
@@ -185,6 +176,7 @@ func NewDropHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	}
 }
 
+// NewPageHandler creates HTTP handler to serve static HTML pages from embedded filesystem.
 func NewPageHandler(fs fs.FS, filename string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFileFS(w, r, fs, filename)

@@ -11,19 +11,18 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// Server implements gRPC update service.
 type Server struct {
 	updatepb.UnimplementedUpdateServer
 	service core.Updater
 }
 
+// NewServer creates a new gRPC server instance.
 func NewServer(service core.Updater) *Server {
 	return &Server{service: service}
 }
 
-func (s *Server) Ping(_ context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, nil
-}
-
+// Status returns current service status.
 func (s *Server) Status(ctx context.Context, _ *emptypb.Empty) (*updatepb.StatusReply, error) {
 	var status updatepb.Status
 	switch s.service.Status(ctx) {
@@ -37,6 +36,7 @@ func (s *Server) Status(ctx context.Context, _ *emptypb.Empty) (*updatepb.Status
 	return &updatepb.StatusReply{Status: status}, nil
 }
 
+// Update triggers comics update from XKCD API.
 func (s *Server) Update(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
 	err := s.service.Update(ctx)
 	if err != nil {
@@ -48,6 +48,7 @@ func (s *Server) Update(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, 
 	return nil, err
 }
 
+// Stats returns service statistics.
 func (s *Server) Stats(ctx context.Context, _ *emptypb.Empty) (*updatepb.StatsReply, error) {
 	stats, err := s.service.Stats(ctx)
 	if err != nil {
@@ -61,6 +62,7 @@ func (s *Server) Stats(ctx context.Context, _ *emptypb.Empty) (*updatepb.StatsRe
 	}, nil
 }
 
+// Drop removes all comics from database.
 func (s *Server) Drop(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
 	if err := s.service.Drop(ctx); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

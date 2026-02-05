@@ -17,6 +17,7 @@ const (
 	searchLimit = 10
 )
 
+// encodeReply encodes response as indented JSON.
 func encodeReply(w io.Writer, reply any) error {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
@@ -26,23 +27,25 @@ func encodeReply(w io.Writer, reply any) error {
 	return nil
 }
 
-func NewPingHandler(log *slog.Logger, pingers map[string]core.Pinger) http.HandlerFunc {
+// NewHealthHandler creates HTTP handler for health check endpoint.
+func NewHealthHandler(log *slog.Logger, healthCheckers map[string]core.HealthChecker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reply := core.PingResponse{
-			Replies: make(map[string]core.PingStatus, len(pingers)),
+		reply := core.HealthResponse{
+			Replies: make(map[string]core.HealthStatus, len(healthCheckers)),
 		}
-		for name, pinger := range pingers {
-			err := pinger.Ping(r.Context())
+		// check health of each service
+		for name, healthChecker := range healthCheckers {
+			err := healthChecker.HealthCheck(r.Context())
 			if err == nil {
-				reply.Replies[name] = core.StatusPingOK
+				reply.Replies[name] = core.HealthOK
 				continue
 			}
 			if errors.Is(err, core.ErrServiceUnavailable) {
 				log.Debug("service unavailable", "service", name)
 			} else {
-				log.Warn("service ping failed", "service", name, "error", err)
+				log.Warn("service health check failed", "service", name, "error", err)
 			}
-			reply.Replies[name] = core.StatusPingUnavailable
+			reply.Replies[name] = core.HealthUnavailable
 		}
 		w.Header().Set("Content-Type", "application/json")
 		if err := encodeReply(w, reply); err != nil {
@@ -51,6 +54,7 @@ func NewPingHandler(log *slog.Logger, pingers map[string]core.Pinger) http.Handl
 	}
 }
 
+// NewLoginHandler creates HTTP handler for authentication endpoint.
 func NewLoginHandler(log *slog.Logger, auth core.Authenticator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var login core.LoginRequest
@@ -74,6 +78,7 @@ func NewLoginHandler(log *slog.Logger, auth core.Authenticator) http.HandlerFunc
 	}
 }
 
+// NewSearchHandler creates HTTP handler for exact phrase search.
 func NewSearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		phrase := r.URL.Query().Get(paramPhrase)
@@ -81,6 +86,8 @@ func NewSearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFunc
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		
+		// parse limit parameter with default value
 		limitStr := r.URL.Query().Get(paramLimit)
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
@@ -115,6 +122,7 @@ func NewSearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFunc
 	}
 }
 
+// NewISearchHandler creates HTTP handler for indexed search.
 func NewISearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		phrase := r.URL.Query().Get(paramPhrase)
@@ -122,6 +130,7 @@ func NewISearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFun
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
+		// parse limit parameter with default value
 		limitStr := r.URL.Query().Get(paramLimit)
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
@@ -156,6 +165,7 @@ func NewISearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFun
 	}
 }
 
+// NewUpdateStatsHandler creates HTTP handler for database statistics.
 func NewUpdateStatsHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		stats, err := updater.Stats(r.Context())
@@ -176,6 +186,7 @@ func NewUpdateStatsHandler(log *slog.Logger, updater core.Updater) http.HandlerF
 	}
 }
 
+// NewUpdateStatusHandler creates HTTP handler for update process status.
 func NewUpdateStatusHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		status, err := updater.Status(r.Context())
@@ -196,6 +207,7 @@ func NewUpdateStatusHandler(log *slog.Logger, updater core.Updater) http.Handler
 	}
 }
 
+// NewUpdateHandler creates HTTP handler to trigger database update.
 func NewUpdateHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := updater.Update(r.Context()); err != nil {
@@ -214,6 +226,7 @@ func NewUpdateHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	}
 }
 
+// NewDropHandler creates HTTP handler to drop all database data.
 func NewDropHandler(log *slog.Logger, updater core.Updater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := updater.Drop(r.Context()); err != nil {

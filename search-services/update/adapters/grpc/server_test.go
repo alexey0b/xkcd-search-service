@@ -15,17 +15,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func TestPing(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockUpdater := core.NewMockUpdater(ctrl)
-	server := grpc.NewServer(mockUpdater)
-
-	_, err := server.Ping(context.Background(), &emptypb.Empty{})
-	require.NoError(t, err)
-}
-
 func TestStatus(t *testing.T) {
 	testCases := []struct {
 		desc           string

@@ -31,7 +31,6 @@ func main() {
 	var cfg config.Config
 	config.MustLoad(configPath, &cfg)
 
-	// Logger
 	log := mustMakeLogger(cfg.LogLevel)
 
 	if err := run(cfg, log); err != nil {
@@ -88,9 +87,9 @@ func run(cfg config.Config, log *slog.Logger) error {
 	// API statistics endpoints
 	mux.Handle("GET /api/db/stats", rest.NewUpdateStatsHandler(log, update))
 	mux.Handle("GET /api/db/status", rest.NewUpdateStatusHandler(log, update))
-	mux.Handle("GET /api/ping", rest.NewPingHandler(
+	mux.Handle("GET /api/health", rest.NewHealthHandler(
 		log,
-		map[string]core.Pinger{
+		map[string]core.HealthChecker{
 			"update": update,
 			"words":  words,
 			"search": search,

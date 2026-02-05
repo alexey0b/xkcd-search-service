@@ -7,12 +7,14 @@ import (
 	"time"
 )
 
+// SearcherScheduler periodically updates the search index.
 type SearcherScheduler struct {
 	log      *slog.Logger
 	searcher core.Searcher
 	interval time.Duration
 }
 
+// NewSearcherScheduler creates a new scheduler for periodic index updates.
 func NewSearcherScheduler(log *slog.Logger, searcher core.Searcher, interval time.Duration) *SearcherScheduler {
 	return &SearcherScheduler{
 		log:      log,
@@ -21,6 +23,7 @@ func NewSearcherScheduler(log *slog.Logger, searcher core.Searcher, interval tim
 	}
 }
 
+// Start begins periodic index updates at configured interval.
 func (s *SearcherScheduler) Start(ctx context.Context) error {
 	s.log.Info("start searcher scheduler")
 	if err := s.searcher.UpdateIndex(ctx); err != nil {

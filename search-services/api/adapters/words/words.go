@@ -11,16 +11,19 @@ import (
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// Client is a gRPC client for the Words service.
 type Client struct {
-	log    *slog.Logger
-	conn   *grpc.ClientConn
-	client wordspb.WordsClient
+	log          *slog.Logger
+	conn         *grpc.ClientConn
+	client       wordspb.WordsClient
+	healthClient healthpb.HealthClient
 }
 
+// NewClient creates a new Words service gRPC client with exponential backoff retry.
 func NewClient(address string, log *slog.Logger) (*Client, error) {
 	conn, err := grpc.NewClient(
 		address,
@@ -38,28 +41,36 @@ func NewClient(address string, log *slog.Logger) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		log:    log,
-		conn:   conn,
-		client: wordspb.NewWordsClient(conn),
+		log:          log,
+		conn:         conn,
+		client:       wordspb.NewWordsClient(conn),
+		healthClient: healthpb.NewHealthClient(conn),
 	}, nil
 }
 
+// Close closes the gRPC connection.
 func (c *Client) Close() {
 	if err := c.conn.Close(); err != nil {
 		c.log.Warn("failed to close gRPC connection", "error", err)
 	}
 }
 
-func (c *Client) Ping(ctx context.Context) error {
-	if _, err := c.client.Ping(ctx, &emptypb.Empty{}); err != nil {
+// HealthCheck checks if the Words service is healthy and serving requests.
+func (c *Client) HealthCheck(ctx context.Context) error {
+	resp, err := c.healthClient.Check(ctx, &healthpb.HealthCheckRequest{})
+	if err != nil {
 		if status.Code(err) == codes.Unavailable {
 			return core.ErrServiceUnavailable
 		}
 		return err
 	}
+	if resp.Status != healthpb.HealthCheckResponse_SERVING {
+		return core.ErrServiceUnavailable
+	}
 	return nil
 }
 
+// Norm normalizes words in the phrase.
 func (c *Client) Norm(ctx context.Context, phrase string) ([]string, error) {
 	reply, err := c.client.Norm(ctx, &wordspb.WordsRequest{Phrase: phrase})
 	if err != nil {

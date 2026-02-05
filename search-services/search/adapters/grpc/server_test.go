@@ -12,7 +12,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type mockSearchStream struct {
@@ -27,17 +26,6 @@ func (m *mockSearchStream) Send(reply *searchpb.SearchReply) error {
 
 func (m *mockSearchStream) Context() context.Context {
 	return context.Background()
-}
-
-func TestPing(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockSearcher := core.NewMockSearcher(ctrl)
-	server := grpc.NewServer(mockSearcher)
-
-	_, err := server.Ping(context.Background(), &emptypb.Empty{})
-	require.NoError(t, err)
 }
 
 func TestSearch(t *testing.T) {

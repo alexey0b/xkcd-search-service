@@ -34,3 +34,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: frontend-config
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5

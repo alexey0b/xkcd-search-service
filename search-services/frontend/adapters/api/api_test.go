@@ -14,55 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const statusPingOK core.PingStatus = "ok"
-
-func TestPing(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		serverStatus int
-		serverReply  core.PingResponse
-		wantErr      bool
-	}{
-		{
-			desc:         "success - ping ok",
-			serverStatus: http.StatusOK,
-			serverReply:  core.PingResponse{Replies: map[string]core.PingStatus{"api": statusPingOK}},
-		},
-		{
-			desc:         "error - bad request",
-			serverStatus: http.StatusBadRequest,
-			wantErr:      true,
-		},
-		{
-			desc:         "error - service unavailable",
-			serverStatus: http.StatusServiceUnavailable,
-			wantErr:      true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(tc.serverStatus)
-				if tc.serverStatus == http.StatusOK {
-					_ = json.NewEncoder(w).Encode(tc.serverReply)
-				}
-			}))
-			defer server.Close()
-
-			client := api.NewClient(server.URL, time.Second, slog.Default())
-			result, err := client.Ping(context.Background())
-
-			if tc.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.serverReply, result)
-			}
-		})
-	}
-}
-
 func TestSearch(t *testing.T) {
 	testCases := []struct {
 		desc         string

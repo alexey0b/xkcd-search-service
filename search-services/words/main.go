@@ -17,9 +17,10 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const maxPhraseLen = 1_048_576 // 1MB
@@ -28,16 +29,13 @@ type server struct {
 	wordspb.UnimplementedWordsServer
 }
 
-func (s *server) Ping(_ context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, nil
-}
-
+// Norm normalizes and stems words in the input phrase.
 func (s *server) Norm(_ context.Context, in *wordspb.WordsRequest) (*wordspb.WordsReply, error) {
 	phrase := in.GetPhrase()
 	if len([]byte(phrase)) > maxPhraseLen {
 		return nil, status.Error(
 			codes.ResourceExhausted,
-			"phrase is large than "+strconv.Itoa(maxPhraseLen),
+			"phrase is larger than "+strconv.Itoa(maxPhraseLen),
 		)
 	}
 	return &wordspb.WordsReply{
@@ -53,7 +51,6 @@ func main() {
 	var cfg config.Config
 	config.MustLoad(configPath, &cfg)
 
-	// Logger
 	log := mustMakeLogger(cfg.LogLevel)
 
 	if err := run(cfg, log); err != nil {
@@ -73,6 +70,10 @@ func run(cfg config.Config, log *slog.Logger) error {
 	}
 
 	s := grpc.NewServer()
+
+	// register gRPC services
+	healthcheck := health.NewServer()
+	healthgrpc.RegisterHealthServer(s, healthcheck)
 	wordspb.RegisterWordsServer(s, &server{})
 	reflection.Register(s)
 

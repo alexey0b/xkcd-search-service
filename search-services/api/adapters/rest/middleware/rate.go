@@ -9,28 +9,27 @@ import (
 	"time"
 )
 
-// Limit - максимальная частота событий (event/sec).
+// Limit represents the maximum rate of events (events/sec).
 type Limit float64
 
-// Inf - бесконечный лимит (allows all events).
+// Inf represents an infinite rate limit (allows all events).
 const Inf = Limit(math.MaxFloat64)
 
-// defaultBurst - размер defaultBurst по умолчанию для строгого соблюдения RPS.
+// defaultBurst is the default burst size for strict RPS compliance.
 const defaultBurst = 1
 
-// RateLimiter реализует алгоритм Token Bucket для ограничения скорости запросов.
-// Реализация основана на golang.org/x/time/rate.
+// RateLimiter implements the Token Bucket algorithm for rate limiting.
+// Based on golang.org/x/time/rate implementation.
 type RateLimiter struct {
 	mu     sync.Mutex
-	limit  Limit
-	burst  int
-	tokens float64
-	// last время последнего обновления токенов
-	last time.Time
+	limit  Limit     // maximum rate (tokens per second)
+	burst  int       // maximum burst size (token bucket capacity)
+	tokens float64   // current number of available tokens
+	last   time.Time // last time tokens were updated
 }
 
-// NewRateLimiter создает rate limiter с заданным RPS.
-// При rate <= 0 все события бесконечно ожидают, пока не будет отмены внешнего контекста.
+// NewRateLimiter creates a rate limiter with specified RPS (requests per second).
+// If rate <= 0, all events will wait indefinitely until context cancellation.
 func NewRateLimiter(rate int) *RateLimiter {
 	return &RateLimiter{
 		limit: Limit(rate),
@@ -38,6 +37,7 @@ func NewRateLimiter(rate int) *RateLimiter {
 	}
 }
 
+// Limit is a middleware that enforces rate limiting using rate limiter.
 func (rl *RateLimiter) Limit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := rl.wait(r.Context()); err != nil {
@@ -48,45 +48,44 @@ func (rl *RateLimiter) Limit(next http.Handler) http.Handler {
 	})
 }
 
+// wait blocks until a token is available or context is cancelled.
 func (rl *RateLimiter) wait(ctx context.Context) error {
 	rl.mu.Lock()
-	limit := rl.limit
-	rl.mu.Unlock()
 
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	rl.mu.Lock()
+	// refill tokens based on elapsed time
 	now := time.Now()
 	rl.tokens = rl.tokensAt(now)
 	rl.last = now
 
+	// try to consume one
+	limit := rl.limit
 	tokens := rl.tokens - 1
 	var delay time.Duration
 	if tokens < 0 {
+		// not enough tokens, calculate wait time
 		delay = limit.durationFromTokens(-tokens)
 	}
 
+	// check if delay would exceed context deadline
 	if deadline, ok := ctx.Deadline(); ok {
 		if now.Add(delay).After(deadline) {
 			rl.mu.Unlock()
-			return fmt.Errorf("rate: Wait would exceed context deadline")
+			return fmt.Errorf("rate: wait would exceed context deadline")
 		}
 	}
 
 	rl.tokens = tokens
+
 	rl.mu.Unlock()
 
+	// no delay needed, token available immediately
 	if delay <= 0 {
 		return nil
 	}
 
+	// wait for token to become available
 	timer := time.NewTimer(delay)
 	defer timer.Stop()
-
 	select {
 	case <-timer.C:
 		return nil
@@ -95,24 +94,28 @@ func (rl *RateLimiter) wait(ctx context.Context) error {
 	}
 }
 
+// tokensAt calculates the number of available tokens at time t.
 func (rl *RateLimiter) tokensAt(t time.Time) float64 {
 	if rl.limit == Inf {
 		return float64(rl.burst)
 	}
 
+	// calculate elapsed time since last update
 	elapsed := t.Sub(rl.last)
 	elapsed = max(elapsed, 0)
 
+	// calculate tokens to add based on elapsed time
 	delta := rl.limit.tokensFromDuration(elapsed)
 	tokens := rl.tokens + delta
 
+	// number of available tokens must be less or equal burst size
 	if burst := float64(rl.burst); tokens > burst {
 		tokens = burst
 	}
-
 	return tokens
 }
 
+// durationFromTokens calculates the time needed to accumulate the given number of tokens.
 func (limit Limit) durationFromTokens(tokens float64) time.Duration {
 	if limit <= 0 {
 		return time.Duration(math.MaxInt64)
@@ -121,6 +124,7 @@ func (limit Limit) durationFromTokens(tokens float64) time.Duration {
 	return time.Duration(float64(time.Second) * seconds)
 }
 
+// tokensFromDuration calculates the number of tokens accumulated over duration d.
 func (limit Limit) tokensFromDuration(d time.Duration) float64 {
 	if limit <= 0 {
 		return 0

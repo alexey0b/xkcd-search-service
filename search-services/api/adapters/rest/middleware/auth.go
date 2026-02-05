@@ -12,9 +12,10 @@ import (
 
 const (
 	tokenPrefix  = "Token "
-	validSubject = "superuser"
+	validSubject = "superuser" // JWT subject for admin users
 )
 
+// JwtAuthenticator handles JWT token creation and validation for admin authentication.
 type JwtAuthenticator struct {
 	adminUser     string
 	adminPassword string
@@ -22,6 +23,7 @@ type JwtAuthenticator struct {
 	ttl           time.Duration
 }
 
+// NewJwtAuthenticator creates a new JWT authenticator with admin credentials.
 func NewJwtAuthenticator(adminUser, adminPassword, jwtSecret string, ttl time.Duration) (*JwtAuthenticator, error) {
 	return &JwtAuthenticator{
 		adminUser:     adminUser,
@@ -31,15 +33,20 @@ func NewJwtAuthenticator(adminUser, adminPassword, jwtSecret string, ttl time.Du
 	}, nil
 }
 
+// CreateToken generates a new JWT token after validating admin credentials.
 func (tm *JwtAuthenticator) CreateToken(name, password string) (string, error) {
+	// validate admin credentials
 	if name != tm.adminUser || password != tm.adminPassword {
 		return "", core.ErrInvalidCredentials
 	}
+	
+	// create JWT token with expiration
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Subject:   validSubject,
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(tm.ttl)),
 	})
+	
 	signedToken, err := token.SignedString([]byte(tm.jwtSecret))
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
@@ -47,8 +54,9 @@ func (tm *JwtAuthenticator) CreateToken(name, password string) (string, error) {
 	return signedToken, nil
 }
 
+// ValidateToken verifies JWT token signature, expiration, and subject.
 func (tm *JwtAuthenticator) ValidateToken(tokenString string) error {
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
 		return []byte(tm.jwtSecret), nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
@@ -57,6 +65,8 @@ func (tm *JwtAuthenticator) ValidateToken(tokenString string) error {
 	if !token.Valid {
 		return core.ErrInvalidCredentials
 	}
+	
+	// verify subject claim
 	subject, err := token.Claims.GetSubject()
 	if err != nil {
 		return core.ErrInvalidCredentials
@@ -67,17 +77,18 @@ func (tm *JwtAuthenticator) ValidateToken(tokenString string) error {
 	return nil
 }
 
+// CheckToken is a middleware that validates JWT token from Authorization header or cookie.
 func (tm *JwtAuthenticator) CheckToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var token string
 
-		// Приоритет 1: Authorization header
+		// Priority 1: Authorization header
 		authHeader := r.Header.Get("Authorization")
 		cleanedToken, found := strings.CutPrefix(authHeader, tokenPrefix)
 		if found {
 			token = cleanedToken
 		} else {
-			// Приоритет 2: Cookie
+			// Priority 2: Cookie
 			cookie, err := r.Cookie("jwt_token")
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)

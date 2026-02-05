@@ -31,3 +31,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: words-config
+          livenessProbe:
+            grpc:
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5

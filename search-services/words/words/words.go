@@ -7,6 +7,7 @@ import (
 	"github.com/kljensen/snowball/english"
 )
 
+// Norm normalizes phrase by tokenizing, stemming, and removing stop words.
 func Norm(phrase string) []string {
 	filteredSeq := strings.FieldsFunc(phrase, func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c)

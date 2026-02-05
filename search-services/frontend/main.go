@@ -33,7 +33,6 @@ func main() {
 	var cfg config.Config
 	config.MustLoad(configPath, &cfg)
 
-	// Logger
 	log := mustMakeLogger(cfg.LogLevel)
 
 	if err := run(cfg, log); err != nil {
@@ -77,7 +76,6 @@ func run(cfg config.Config, log *slog.Logger) error {
 	// API endpoints
 	mux.Handle("GET /api/search", web.NewSearchHandler(log, api))
 	mux.Handle("POST /api/login", web.NewLoginHandler(log, jwtAth, cfg.Auth.TokenTtl))
-	mux.Handle("GET /api/ping", web.NewPingHandler(log, api))
 
 	// API admin endpoints (requires JWT)
 	mux.Handle("GET /api/admin/statistics", jwtAth.CheckToken(web.NewStatisticsHandler(log, api)))

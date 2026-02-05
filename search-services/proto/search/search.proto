@@ -4,7 +4,7 @@ package search;
 
 import "google/protobuf/empty.proto";
 
-option go_package = "yadro.com/course/proto/search";
+option go_package = "search-service/proto/search";
 
 message SearchRequest {
   string phrase = 1;
@@ -17,8 +17,6 @@ message SearchReply {
 }
 
 service Search {
-  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-
   rpc Search(SearchRequest) returns (stream SearchReply) {}
   rpc ISearch(SearchRequest) returns (stream SearchReply) {}
 }

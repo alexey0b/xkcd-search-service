@@ -9,7 +9,7 @@ package search
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	_ "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -136,11 +136,10 @@ const file_proto_search_search_proto_rawDesc = "" +
 	"\x05limit\x18\x02 \x01(\x03R\x05limit\"/\n" +
 	"\vSearchReply\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url2\xb7\x01\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url2}\n" +
 	"\x06Search\x128\n" +
-	"\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x128\n" +
 	"\x06Search\x12\x15.search.SearchRequest\x1a\x13.search.SearchReply\"\x000\x01\x129\n" +
-	"\aISearch\x12\x15.search.SearchRequest\x1a\x13.search.SearchReply\"\x000\x01B\x1fZ\x1dyadro.com/course/proto/searchb\x06proto3"
+	"\aISearch\x12\x15.search.SearchRequest\x1a\x13.search.SearchReply\"\x000\x01B\x1dZ\x1bsearch-service/proto/searchb\x06proto3"
 
 var (
 	file_proto_search_search_proto_rawDescOnce sync.Once
@@ -158,17 +157,14 @@ var file_proto_search_search_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_proto_search_search_proto_goTypes = []any{
 	(*SearchRequest)(nil), // 0: search.SearchRequest
 	(*SearchReply)(nil),   // 1: search.SearchReply
-	(*emptypb.Empty)(nil), // 2: google.protobuf.Empty
 }
 var file_proto_search_search_proto_depIdxs = []int32{
-	2, // 0: search.Search.Ping:input_type -> google.protobuf.Empty
-	0, // 1: search.Search.Search:input_type -> search.SearchRequest
-	0, // 2: search.Search.ISearch:input_type -> search.SearchRequest
-	2, // 3: search.Search.Ping:output_type -> google.protobuf.Empty
-	1, // 4: search.Search.Search:output_type -> search.SearchReply
-	1, // 5: search.Search.ISearch:output_type -> search.SearchReply
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	0, // 0: search.Search.Search:input_type -> search.SearchRequest
+	0, // 1: search.Search.ISearch:input_type -> search.SearchRequest
+	1, // 2: search.Search.Search:output_type -> search.SearchReply
+	1, // 3: search.Search.ISearch:output_type -> search.SearchReply
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

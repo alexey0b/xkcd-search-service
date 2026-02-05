@@ -16,11 +16,13 @@ const (
 	getAllComicsInfo = `SELECT id, url, words FROM comics`
 )
 
+// DB implements database operations for search service.
 type DB struct {
 	log  *slog.Logger
 	conn *sqlx.DB
 }
 
+// New creates a new database connection.
 func New(log *slog.Logger, address string) (*DB, error) {
 	db, err := sqlx.Connect("pgx", address)
 	if err != nil {
@@ -33,12 +35,14 @@ func New(log *slog.Logger, address string) (*DB, error) {
 	}, nil
 }
 
+// Close closes connection.
 func (db *DB) Close() {
 	if err := db.conn.Close(); err != nil {
 		db.log.Warn("failed to close database connection", "error", err)
 	}
 }
 
+// GetComicsByIds extract comics by their IDs.
 func (db *DB) GetComicsByIds(ctx context.Context, ids []int64) ([]core.Comic, error) {
 	var comics []core.Comic
 	if err := db.conn.Select(&comics, getComicsByIds, pq.Array(ids)); err != nil {
@@ -47,6 +51,7 @@ func (db *DB) GetComicsByIds(ctx context.Context, ids []int64) ([]core.Comic, er
 	return comics, nil
 }
 
+// GetAllComicsInfo extract all comics with their indexed words.
 func (db *DB) GetAllComicsInfo(ctx context.Context) ([]core.ComicInfo, error) {
 	var comicsPg []struct {
 		core.Comic

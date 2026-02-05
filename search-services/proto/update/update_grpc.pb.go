@@ -20,7 +20,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Update_Ping_FullMethodName   = "/update.Update/Ping"
 	Update_Status_FullMethodName = "/update.Update/Status"
 	Update_Update_FullMethodName = "/update.Update/Update"
 	Update_Stats_FullMethodName  = "/update.Update/Stats"
@@ -31,7 +30,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UpdateClient interface {
-	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Status(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatusReply, error)
 	Update(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Stats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatsReply, error)
@@ -44,16 +42,6 @@ type updateClient struct {
 
 func NewUpdateClient(cc grpc.ClientConnInterface) UpdateClient {
 	return &updateClient{cc}
-}
-
-func (c *updateClient) Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Update_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *updateClient) Status(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatusReply, error) {
@@ -100,7 +88,6 @@ func (c *updateClient) Drop(ctx context.Context, in *emptypb.Empty, opts ...grpc
 // All implementations must embed UnimplementedUpdateServer
 // for forward compatibility.
 type UpdateServer interface {
-	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	Status(context.Context, *emptypb.Empty) (*StatusReply, error)
 	Update(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	Stats(context.Context, *emptypb.Empty) (*StatsReply, error)
@@ -115,9 +102,6 @@ type UpdateServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUpdateServer struct{}
 
-func (UnimplementedUpdateServer) Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
 func (UnimplementedUpdateServer) Status(context.Context, *emptypb.Empty) (*StatusReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
 }
@@ -149,24 +133,6 @@ func RegisterUpdateServer(s grpc.ServiceRegistrar, srv UpdateServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Update_ServiceDesc, srv)
-}
-
-func _Update_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UpdateServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Update_Ping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UpdateServer).Ping(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Update_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -248,10 +214,6 @@ var Update_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "update.Update",
 	HandlerType: (*UpdateServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Ping",
-			Handler:    _Update_Ping_Handler,
-		},
 		{
 			MethodName: "Status",
 			Handler:    _Update_Status_Handler,

@@ -55,42 +55,42 @@ func (mr *MockNormalizerMockRecorder) Norm(ctx, phrase any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Norm", reflect.TypeOf((*MockNormalizer)(nil).Norm), ctx, phrase)
 }
 
-// MockPinger is a mock of Pinger interface.
-type MockPinger struct {
+// MockHealthChecker is a mock of HealthChecker interface.
+type MockHealthChecker struct {
 	ctrl     *gomock.Controller
-	recorder *MockPingerMockRecorder
+	recorder *MockHealthCheckerMockRecorder
 	isgomock struct{}
 }
 
-// MockPingerMockRecorder is the mock recorder for MockPinger.
-type MockPingerMockRecorder struct {
-	mock *MockPinger
+// MockHealthCheckerMockRecorder is the mock recorder for MockHealthChecker.
+type MockHealthCheckerMockRecorder struct {
+	mock *MockHealthChecker
 }
 
-// NewMockPinger creates a new mock instance.
-func NewMockPinger(ctrl *gomock.Controller) *MockPinger {
-	mock := &MockPinger{ctrl: ctrl}
-	mock.recorder = &MockPingerMockRecorder{mock}
+// NewMockHealthChecker creates a new mock instance.
+func NewMockHealthChecker(ctrl *gomock.Controller) *MockHealthChecker {
+	mock := &MockHealthChecker{ctrl: ctrl}
+	mock.recorder = &MockHealthCheckerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockPinger) EXPECT() *MockPingerMockRecorder {
+func (m *MockHealthChecker) EXPECT() *MockHealthCheckerMockRecorder {
 	return m.recorder
 }
 
-// Ping mocks base method.
-func (m *MockPinger) Ping(ctx context.Context) error {
+// HealthCheck mocks base method.
+func (m *MockHealthChecker) HealthCheck(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Ping", ctx)
+	ret := m.ctrl.Call(m, "HealthCheck", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Ping indicates an expected call of Ping.
-func (mr *MockPingerMockRecorder) Ping(ctx any) *gomock.Call {
+// HealthCheck indicates an expected call of HealthCheck.
+func (mr *MockHealthCheckerMockRecorder) HealthCheck(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockPinger)(nil).Ping), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealthCheck", reflect.TypeOf((*MockHealthChecker)(nil).HealthCheck), ctx)
 }
 
 // MockUpdater is a mock of Updater interface.

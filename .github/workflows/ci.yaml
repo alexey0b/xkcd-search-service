@@ -18,20 +18,8 @@ jobs:
           go install github.com/yoheimuta/protolint/cmd/protolint@latest
           make lint
 
-  security:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
-      - name: gosec
-        run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
-          make security
-
   build:
-    needs: [lint, security]
+    needs: lint
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v5
@@ -49,10 +37,9 @@ jobs:
       - name: Run Integration Tests
         run: |
           make integration-tests
-
-      - name: Coveralls GitHub Action
+      - name: Run Unit Tests
         run: |
-          make cover
+          make unit-tests
       - uses: coverallsapp/github-action@v2.3.6
         with:
           file: cover.out

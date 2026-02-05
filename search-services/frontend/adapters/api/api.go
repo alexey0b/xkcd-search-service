@@ -13,10 +13,8 @@ import (
 )
 
 const (
-	pingEndpoint = "/api/ping"
-
-	searchEndpoint = "/api/search"
 	maxSearchLimit = 10000
+	searchEndpoint = "/api/search"
 
 	statusEndpoint = "/api/db/status"
 	statsEndpoint  = "/api/db/stats"
@@ -25,12 +23,14 @@ const (
 	dropEndpoint   = "/api/db"
 )
 
+// Client is an HTTP client for the API service.
 type Client struct {
 	log     *slog.Logger
 	client  http.Client
 	address string
 }
 
+// NewClient creates a new API service HTTP client with specified timeout.
 func NewClient(address string, timeout time.Duration, log *slog.Logger) *Client {
 	return &Client{
 		client:  http.Client{Timeout: timeout},
@@ -39,14 +39,8 @@ func NewClient(address string, timeout time.Duration, log *slog.Logger) *Client 
 	}
 }
 
-func (c *Client) Ping(ctx context.Context) (core.PingResponse, error) {
-	var reply core.PingResponse
-	if err := c.doGetEndpoint(ctx, pingEndpoint, &reply); err != nil {
-		return core.PingResponse{}, fmt.Errorf("failed to get ping result: %w", err)
-	}
-	return reply, nil
-}
-
+// Search performs a search query and returns matching comics.
+// Uses indexed search with normalized and stemmed words.
 func (c *Client) Search(ctx context.Context, phrase string) (core.SearchResult, error) {
 	u, err := url.JoinPath(c.address, searchEndpoint)
 	if err != nil {
@@ -58,6 +52,7 @@ func (c *Client) Search(ctx context.Context, phrase string) (core.SearchResult, 
 		return core.SearchResult{}, fmt.Errorf("cannot parse url: %w", err)
 	}
 
+	// build query parameters
 	q := parsedURL.Query()
 	q.Set("phrase", phrase)
 	q.Set("limit", fmt.Sprintf("%d", maxSearchLimit))
@@ -70,6 +65,8 @@ func (c *Client) Search(ctx context.Context, phrase string) (core.SearchResult, 
 	return reply, nil
 }
 
+// GetUpdateStats returns current database statistics.
+// Includes total/unique words count and fetched/total comics count.
 func (c *Client) GetUpdateStats(ctx context.Context) (core.UpdateStats, error) {
 	var reply core.UpdateStats
 	if err := c.doGetEndpoint(ctx, statsEndpoint, &reply); err != nil {
@@ -78,6 +75,7 @@ func (c *Client) GetUpdateStats(ctx context.Context) (core.UpdateStats, error) {
 	return reply, nil
 }
 
+// GetUpdateStatus returns the current status of the database update process.
 func (c *Client) GetUpdateStatus(ctx context.Context) (core.UpdateStatus, error) {
 	var reply struct {
 		Status core.UpdateStatus `json:"status"`
@@ -88,7 +86,8 @@ func (c *Client) GetUpdateStatus(ctx context.Context) (core.UpdateStatus, error)
 	return reply.Status, nil
 }
 
-func (c *Client) doGetEndpoint(ctx context.Context, endpoint string, result interface{}) error {
+// doGetEndpoint performs GET request to the specified endpoint.
+func (c *Client) doGetEndpoint(ctx context.Context, endpoint string, result any) error {
 	fullURL, err := url.JoinPath(c.address, endpoint)
 	if err != nil {
 		return fmt.Errorf("cannot join url path: %w", err)
@@ -96,7 +95,8 @@ func (c *Client) doGetEndpoint(ctx context.Context, endpoint string, result inte
 	return c.doGet(ctx, fullURL, result)
 }
 
-func (c *Client) doGet(ctx context.Context, fullURL string, result interface{}) error {
+// doGet performs GET request and decodes JSON response.
+func (c *Client) doGet(ctx context.Context, fullURL string, result any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL, nil)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
@@ -125,14 +125,17 @@ func (c *Client) doGet(ctx context.Context, fullURL string, result interface{}) 
 	return nil
 }
 
+// Update triggers asynchronous database update to fetch new comics from XKCD API.
 func (c *Client) Update(ctx context.Context) error {
 	return c.doMutateEndpoint(ctx, http.MethodPost, updateEndpoint)
 }
 
+// Drop removes all comics and indexed words from the database.
 func (c *Client) Drop(ctx context.Context) error {
 	return c.doMutateEndpoint(ctx, http.MethodDelete, dropEndpoint)
 }
 
+// doMutateEndpoint performs mutating request (POST/DELETE) to the specified endpoint.
 func (c *Client) doMutateEndpoint(ctx context.Context, method, endpoint string) error {
 	fullURL, err := url.JoinPath(c.address, endpoint)
 	if err != nil {
@@ -141,6 +144,7 @@ func (c *Client) doMutateEndpoint(ctx context.Context, method, endpoint string) 
 	return c.doMutate(ctx, method, fullURL)
 }
 
+// doMutate performs mutating request with JWT token from context.
 func (c *Client) doMutate(ctx context.Context, method, fullURL string) error {
 	req, err := http.NewRequestWithContext(ctx, method, fullURL, nil)
 	if err != nil {
@@ -172,6 +176,7 @@ func (c *Client) doMutate(ctx context.Context, method, fullURL string) error {
 	return nil
 }
 
+// closeBody closes response body and logs errors.
 func (c *Client) closeBody(body io.Closer) {
 	if err := body.Close(); err != nil {
 		c.log.Warn("failed to close response body", "error", err)

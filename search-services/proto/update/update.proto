@@ -4,7 +4,7 @@ package update;
 
 import "google/protobuf/empty.proto";
 
-option go_package = "yadro.com/course/proto/update";
+option go_package = "search-service/proto/update";
 
 message StatsReply {
   int64 words_total = 1;
@@ -24,13 +24,8 @@ message StatusReply {
 }
 
 service Update {
-  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-
   rpc Status(google.protobuf.Empty) returns (StatusReply) {}
-
   rpc Update(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-
   rpc Stats(google.protobuf.Empty) returns (StatsReply) {}
-
   rpc Drop(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

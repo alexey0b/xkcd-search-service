@@ -3,8 +3,6 @@ container_runtime := $(shell which docker || which podman)
 minikube_runtime := $(shell which minikube)
 kubectl_runtime := $(shell which kubectl)
 
-$(info using ${container_runtime})
-
 # Docker Compose Commands
 
 .PHONY: build-images
@@ -98,16 +96,6 @@ clean-test:
 .PHONY: lint
 lint:
 	make -C search-services lint
-
-.PHONY: cover
-cover:
-	make -C search-services cover 
-	mv search-services/cover.out .
-	mv search-services/cover.html .
-
-.PHONY: security
-security:
-	make -C search-services security
 
 .PHONY: proto
 proto:

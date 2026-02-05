@@ -55,11 +55,13 @@ const (
 	truncateComics = `TRUNCATE comics`
 )
 
+// DB implements database operations for update service.
 type DB struct {
 	log  *slog.Logger
 	conn *sqlx.DB
 }
 
+// New creates a new database connection.
 func New(log *slog.Logger, address string) (*DB, error) {
 	db, err := sqlx.Connect("pgx", address)
 	if err != nil {
@@ -72,12 +74,14 @@ func New(log *slog.Logger, address string) (*DB, error) {
 	}, nil
 }
 
+// Close closes connection.
 func (db *DB) Close() {
 	if err := db.conn.Close(); err != nil {
 		db.log.Warn("failed to close database connection", "error", err)
 	}
 }
 
+// Add inserts comics into database and updates statistics.
 func (db *DB) Add(ctx context.Context, comic ...core.Comic) error {
 	tx, err := db.conn.BeginTxx(ctx, nil)
 	if err != nil {
@@ -102,6 +106,7 @@ func (db *DB) Add(ctx context.Context, comic ...core.Comic) error {
 	return nil
 }
 
+// Stats extract database statistics.
 func (db *DB) Stats(ctx context.Context) (core.DBStats, error) {
 	var stats core.DBStats
 	err := db.conn.GetContext(ctx, &stats, getComicsStats)
@@ -111,6 +116,7 @@ func (db *DB) Stats(ctx context.Context) (core.DBStats, error) {
 	return stats, nil
 }
 
+// IDs extract all comic IDs from database.
 func (db *DB) IDs(ctx context.Context) ([]int64, error) {
 	var IDs []int64
 	err := db.conn.SelectContext(ctx, &IDs, getIDs)
@@ -120,6 +126,7 @@ func (db *DB) IDs(ctx context.Context) ([]int64, error) {
 	return IDs, nil
 }
 
+// Drop removes all comics from database and resets statistics.
 func (db *DB) Drop(ctx context.Context) error {
 	tx, err := db.conn.BeginTxx(ctx, nil)
 	if err != nil {

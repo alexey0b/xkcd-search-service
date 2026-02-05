@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"search-service/search/adapters/scheduler"
 	"search-service/search/core"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -22,7 +23,7 @@ func TestStartInitialUpdate(t *testing.T) {
 		{
 			desc: "success - initial update succeeds",
 			prepare: func(m *core.MockSearcher) {
-				m.EXPECT().UpdateIndex(gomock.Any()).Return(nil)
+				m.EXPECT().UpdateIndex(gomock.Any()).Return(nil).AnyTimes()
 			},
 			wantErr: false,
 		},
@@ -45,12 +46,17 @@ func TestStartInitialUpdate(t *testing.T) {
 
 			s := scheduler.NewSearcherScheduler(slog.Default(), mockSearcher, time.Second)
 
-			err := s.Start(context.Background())
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			err := s.Start(ctx)
 
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+				cancel()
+				time.Sleep(50 * time.Millisecond)
 			}
 		})
 	}
@@ -63,10 +69,10 @@ func TestStartPeriodicUpdate(t *testing.T) {
 	mockSearcher := core.NewMockSearcher(ctrl)
 
 	expectedCalls := 3
-	callCount := 0
+	var callCount atomic.Int32
 
 	mockSearcher.EXPECT().UpdateIndex(gomock.Any()).DoAndReturn(func(ctx context.Context) error {
-		callCount++
+		callCount.Add(1)
 		return nil
 	}).MinTimes(expectedCalls)
 
@@ -83,7 +89,7 @@ func TestStartPeriodicUpdate(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	require.GreaterOrEqual(t, callCount, expectedCalls)
+	require.GreaterOrEqual(t, int(callCount.Load()), expectedCalls)
 }
 
 func TestStartContextCancellation(t *testing.T) {

@@ -200,13 +200,12 @@ const file_proto_update_update_proto_rawDesc = "" +
 	"\x06Status\x12\x16\n" +
 	"\x12STATUS_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vSTATUS_IDLE\x10\x01\x12\x12\n" +
-	"\x0eSTATUS_RUNNING\x10\x022\xa8\x02\n" +
-	"\x06Update\x128\n" +
-	"\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x127\n" +
+	"\x0eSTATUS_RUNNING\x10\x022\xee\x01\n" +
+	"\x06Update\x127\n" +
 	"\x06Status\x12\x16.google.protobuf.Empty\x1a\x13.update.StatusReply\"\x00\x12:\n" +
 	"\x06Update\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x125\n" +
 	"\x05Stats\x12\x16.google.protobuf.Empty\x1a\x12.update.StatsReply\"\x00\x128\n" +
-	"\x04Drop\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00B\x1fZ\x1dyadro.com/course/proto/updateb\x06proto3"
+	"\x04Drop\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00B\x1dZ\x1bsearch-service/proto/updateb\x06proto3"
 
 var (
 	file_proto_update_update_proto_rawDescOnce sync.Once
@@ -230,18 +229,16 @@ var file_proto_update_update_proto_goTypes = []any{
 }
 var file_proto_update_update_proto_depIdxs = []int32{
 	0, // 0: update.StatusReply.status:type_name -> update.Status
-	3, // 1: update.Update.Ping:input_type -> google.protobuf.Empty
-	3, // 2: update.Update.Status:input_type -> google.protobuf.Empty
-	3, // 3: update.Update.Update:input_type -> google.protobuf.Empty
-	3, // 4: update.Update.Stats:input_type -> google.protobuf.Empty
-	3, // 5: update.Update.Drop:input_type -> google.protobuf.Empty
-	3, // 6: update.Update.Ping:output_type -> google.protobuf.Empty
-	2, // 7: update.Update.Status:output_type -> update.StatusReply
-	3, // 8: update.Update.Update:output_type -> google.protobuf.Empty
-	1, // 9: update.Update.Stats:output_type -> update.StatsReply
-	3, // 10: update.Update.Drop:output_type -> google.protobuf.Empty
-	6, // [6:11] is the sub-list for method output_type
-	1, // [1:6] is the sub-list for method input_type
+	3, // 1: update.Update.Status:input_type -> google.protobuf.Empty
+	3, // 2: update.Update.Update:input_type -> google.protobuf.Empty
+	3, // 3: update.Update.Stats:input_type -> google.protobuf.Empty
+	3, // 4: update.Update.Drop:input_type -> google.protobuf.Empty
+	2, // 5: update.Update.Status:output_type -> update.StatusReply
+	3, // 6: update.Update.Update:output_type -> google.protobuf.Empty
+	1, // 7: update.Update.Stats:output_type -> update.StatsReply
+	3, // 8: update.Update.Drop:output_type -> google.protobuf.Empty
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name

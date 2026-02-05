@@ -34,3 +34,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: update-config
+          livenessProbe:
+            grpc:
+              port: 8082
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5

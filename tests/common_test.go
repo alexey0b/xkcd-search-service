@@ -19,17 +19,17 @@ func TestPreflight(t *testing.T) {
 	require.Equal(t, true, true)
 }
 
-type PingResponse struct {
+type HealthResponse struct {
 	Replies map[string]string `json:"replies"`
 }
 
-func TestPing(t *testing.T) {
-	resp, err := client.Get(address + "/api/ping")
-	require.NoError(t, err, "cannot ping")
+func TestHealth(t *testing.T) {
+	resp, err := client.Get(address + "/api/health")
+	require.NoError(t, err, "cannot health")
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode, "wrong status")
 
-	var reply PingResponse
+	var reply HealthResponse
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&reply))
 	require.Equal(t, "ok", reply.Replies["words"], "no words running")
 	require.Equal(t, "ok", reply.Replies["update"], "no db running")

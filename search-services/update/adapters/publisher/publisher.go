@@ -9,12 +9,14 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+// NatsPublisher publishes events to NATS message broker.
 type NatsPublisher struct {
 	subj string
 	conn *nats.Conn
 	log  *slog.Logger
 }
 
+// NewNatsPublisher creates a new NATS publisher.
 func NewNatsPublisher(address, subj string, log *slog.Logger) (*NatsPublisher, error) {
 	nc, err := nats.Connect(address,
 		nats.Name("Publisher"),
@@ -44,10 +46,7 @@ func NewNatsPublisher(address, subj string, log *slog.Logger) (*NatsPublisher, e
 	}, nil
 }
 
-func (np *NatsPublisher) Close() {
-	np.conn.Close()
-}
-
+// Publish publishes an event to NATS subject.
 func (np *NatsPublisher) Publish(event core.EventType) error {
 	if err := np.conn.Publish(np.subj, []byte(event)); err != nil {
 		return fmt.Errorf("failed to publish event: %w", err)
@@ -57,4 +56,9 @@ func (np *NatsPublisher) Publish(event core.EventType) error {
 	}
 	np.log.Debug("message published successfully", "subject", np.subj, "event", event)
 	return nil
+}
+
+// Close closes the connection to NATS.
+func (np *NatsPublisher) Close() {
+	np.conn.Close()
 }

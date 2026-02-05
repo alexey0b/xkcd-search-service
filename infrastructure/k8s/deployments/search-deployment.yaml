@@ -34,3 +34,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: search-config
+          livenessProbe:
+            grpc:
+              port: 8083
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5

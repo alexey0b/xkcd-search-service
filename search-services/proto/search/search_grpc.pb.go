@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Search_Ping_FullMethodName    = "/search.Search/Ping"
 	Search_Search_FullMethodName  = "/search.Search/Search"
 	Search_ISearch_FullMethodName = "/search.Search/ISearch"
 )
@@ -29,7 +27,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SearchClient interface {
-	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SearchReply], error)
 	ISearch(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SearchReply], error)
 }
@@ -40,16 +37,6 @@ type searchClient struct {
 
 func NewSearchClient(cc grpc.ClientConnInterface) SearchClient {
 	return &searchClient{cc}
-}
-
-func (c *searchClient) Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Search_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *searchClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SearchReply], error) {
@@ -94,7 +81,6 @@ type Search_ISearchClient = grpc.ServerStreamingClient[SearchReply]
 // All implementations must embed UnimplementedSearchServer
 // for forward compatibility.
 type SearchServer interface {
-	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	Search(*SearchRequest, grpc.ServerStreamingServer[SearchReply]) error
 	ISearch(*SearchRequest, grpc.ServerStreamingServer[SearchReply]) error
 	mustEmbedUnimplementedSearchServer()
@@ -107,9 +93,6 @@ type SearchServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSearchServer struct{}
 
-func (UnimplementedSearchServer) Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
 func (UnimplementedSearchServer) Search(*SearchRequest, grpc.ServerStreamingServer[SearchReply]) error {
 	return status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
@@ -135,24 +118,6 @@ func RegisterSearchServer(s grpc.ServiceRegistrar, srv SearchServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Search_ServiceDesc, srv)
-}
-
-func _Search_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SearchServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Search_Ping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SearchServer).Ping(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Search_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -183,12 +148,7 @@ type Search_ISearchServer = grpc.ServerStreamingServer[SearchReply]
 var Search_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "search.Search",
 	HandlerType: (*SearchServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Ping",
-			Handler:    _Search_Ping_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Search",

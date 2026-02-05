@@ -2,9 +2,7 @@ syntax = "proto3";
 
 package words;
 
-import "google/protobuf/empty.proto";
-
-option go_package = "yadro.com/course/proto/words";
+option go_package = "search-service/proto/words";
 
 message WordsRequest {
   string phrase = 1;
@@ -14,9 +12,6 @@ message WordsReply {
   repeated string words = 1;
 }
 
-
 service Words {
-  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
-  
   rpc Norm(WordsRequest) returns (WordsReply) {}
 }

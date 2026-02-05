@@ -18,51 +18,51 @@ import (
 func TestPingHandler(t *testing.T) {
 	testCases := []struct {
 		desc         string
-		prepare      func(*core.MockPinger, *core.MockPinger, *core.MockPinger)
-		expectedResp core.PingResponse
+		prepare      func(*core.MockHealthChecker, *core.MockHealthChecker, *core.MockHealthChecker)
+		expectedResp core.HealthResponse
 	}{
 		{
 			desc: "success - all services available",
-			prepare: func(p1, p2, p3 *core.MockPinger) {
-				p1.EXPECT().Ping(gomock.Any()).Return(nil)
-				p2.EXPECT().Ping(gomock.Any()).Return(nil)
-				p3.EXPECT().Ping(gomock.Any()).Return(nil)
+			prepare: func(p1, p2, p3 *core.MockHealthChecker) {
+				p1.EXPECT().HealthCheck(gomock.Any()).Return(nil)
+				p2.EXPECT().HealthCheck(gomock.Any()).Return(nil)
+				p3.EXPECT().HealthCheck(gomock.Any()).Return(nil)
 			},
-			expectedResp: core.PingResponse{
-				Replies: map[string]core.PingStatus{
-					"service_1": core.StatusPingOK,
-					"service_2": core.StatusPingOK,
-					"service_3": core.StatusPingOK,
+			expectedResp: core.HealthResponse{
+				Replies: map[string]core.HealthStatus{
+					"service_1": core.HealthOK,
+					"service_2": core.HealthOK,
+					"service_3": core.HealthOK,
 				},
 			},
 		},
 		{
 			desc: "partial error - service_2 is unavailable",
-			prepare: func(p1, p2, p3 *core.MockPinger) {
-				p1.EXPECT().Ping(gomock.Any()).Return(nil)
-				p2.EXPECT().Ping(gomock.Any()).Return(core.ErrServiceUnavailable)
-				p3.EXPECT().Ping(gomock.Any()).Return(nil)
+			prepare: func(p1, p2, p3 *core.MockHealthChecker) {
+				p1.EXPECT().HealthCheck(gomock.Any()).Return(nil)
+				p2.EXPECT().HealthCheck(gomock.Any()).Return(core.ErrServiceUnavailable)
+				p3.EXPECT().HealthCheck(gomock.Any()).Return(nil)
 			},
-			expectedResp: core.PingResponse{
-				Replies: map[string]core.PingStatus{
-					"service_1": core.StatusPingOK,
-					"service_2": core.StatusPingUnavailable,
-					"service_3": core.StatusPingOK,
+			expectedResp: core.HealthResponse{
+				Replies: map[string]core.HealthStatus{
+					"service_1": core.HealthOK,
+					"service_2": core.HealthUnavailable,
+					"service_3": core.HealthOK,
 				},
 			},
 		},
 		{
 			desc: "error - service_1 is failed",
-			prepare: func(p1, p2, p3 *core.MockPinger) {
-				p1.EXPECT().Ping(gomock.Any()).Return(errors.New("ping error"))
-				p2.EXPECT().Ping(gomock.Any()).Return(nil)
-				p3.EXPECT().Ping(gomock.Any()).Return(nil)
+			prepare: func(p1, p2, p3 *core.MockHealthChecker) {
+				p1.EXPECT().HealthCheck(gomock.Any()).Return(errors.New("ping error"))
+				p2.EXPECT().HealthCheck(gomock.Any()).Return(nil)
+				p3.EXPECT().HealthCheck(gomock.Any()).Return(nil)
 			},
-			expectedResp: core.PingResponse{
-				Replies: map[string]core.PingStatus{
-					"service_1": core.StatusPingUnavailable,
-					"service_2": core.StatusPingOK,
-					"service_3": core.StatusPingOK,
+			expectedResp: core.HealthResponse{
+				Replies: map[string]core.HealthStatus{
+					"service_1": core.HealthUnavailable,
+					"service_2": core.HealthOK,
+					"service_3": core.HealthOK,
 				},
 			},
 		},
@@ -73,19 +73,19 @@ func TestPingHandler(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			pinger1 := core.NewMockPinger(ctrl)
-			pinger2 := core.NewMockPinger(ctrl)
-			pinger3 := core.NewMockPinger(ctrl)
+			pinger1 := core.NewMockHealthChecker(ctrl)
+			pinger2 := core.NewMockHealthChecker(ctrl)
+			pinger3 := core.NewMockHealthChecker(ctrl)
 
 			tc.prepare(pinger1, pinger2, pinger3)
 
-			pingers := map[string]core.Pinger{
+			pingers := map[string]core.HealthChecker{
 				"service_1": pinger1,
 				"service_2": pinger2,
 				"service_3": pinger3,
 			}
 
-			handler := rest.NewPingHandler(slog.Default(), pingers)
+			handler := rest.NewHealthHandler(slog.Default(), pingers)
 
 			req := httptest.NewRequest(http.MethodGet, "/ping", nil)
 			w := httptest.NewRecorder()
@@ -95,7 +95,7 @@ func TestPingHandler(t *testing.T) {
 			require.Equal(t, http.StatusOK, w.Code)
 			require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 
-			var response core.PingResponse
+			var response core.HealthResponse
 			err := json.NewDecoder(w.Body).Decode(&response)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedResp, response)

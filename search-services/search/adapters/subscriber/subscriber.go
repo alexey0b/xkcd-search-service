@@ -10,12 +10,14 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+// NatsSubscriber subscribes to NATS events and handles them.
 type NatsSubscriber struct {
 	conn *nats.Conn
 	sub  *nats.Subscription
 	log  *slog.Logger
 }
 
+// NewNatsSubscriber creates a new NATS subscriber with event handler.
 func NewNatsSubscriber(address, subj string, handler core.EventHandler, log *slog.Logger) (*NatsSubscriber, error) {
 	nc, err := nats.Connect(address,
 		nats.Name("Subscriber"),
@@ -56,6 +58,7 @@ func NewNatsSubscriber(address, subj string, handler core.EventHandler, log *slo
 	}, nil
 }
 
+// Unsubscribe closes the subscription and connection to NATS.
 func (ns *NatsSubscriber) Unsubscribe() {
 	if err := ns.sub.Unsubscribe(); err != nil {
 		ns.log.Warn("failed to unsubscribe", "subject", ns.sub.Subject)

@@ -14,12 +14,14 @@ import (
 
 const xkcdInfoEndpoint = "info.0.json"
 
+// Client is a HTTP client for the XKCD API.
 type Client struct {
 	log    *slog.Logger
 	client http.Client
 	url    string
 }
 
+// NewClient creates a new XKCD API client.
 func NewClient(url string, timeout time.Duration, log *slog.Logger) (*Client, error) {
 	if url == "" {
 		return nil, fmt.Errorf("empty base url specified")
@@ -31,6 +33,7 @@ func NewClient(url string, timeout time.Duration, log *slog.Logger) (*Client, er
 	}, nil
 }
 
+// Get extract comic information by ID from XKCD API.
 func (c *Client) Get(ctx context.Context, id int64) (core.XKCDInfo, error) {
 	url, err := url.JoinPath(c.url, fmt.Sprint(id), xkcdInfoEndpoint)
 	if err != nil {
@@ -63,6 +66,7 @@ func (c *Client) Get(ctx context.Context, id int64) (core.XKCDInfo, error) {
 	return info, nil
 }
 
+// LastID extract the latest comic ID from XKCD API.
 func (c *Client) LastID(ctx context.Context) (int64, error) {
 	url, err := url.JoinPath(c.url, xkcdInfoEndpoint)
 	if err != nil {
@@ -95,6 +99,7 @@ func (c *Client) LastID(ctx context.Context) (int64, error) {
 	return info.ID, nil
 }
 
+// closeBody closes response body and logs errors.
 func (c *Client) closeBody(body io.Closer) {
 	if err := body.Close(); err != nil {
 		c.log.Warn("failed to close response body", "error", err)

@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// Service manages comic updates from XKCD API to database.
 type Service struct {
 	log     *slog.Logger
 	metrics MetricsCollector
@@ -23,6 +24,7 @@ type Service struct {
 	inProgress  atomic.Bool
 }
 
+// NewService creates a new update service instance.
 func NewService(
 	log *slog.Logger, metrics MetricsCollector, db DB, xkcd XKCD, words Words, publisher Publisher, concurrency int,
 ) (*Service, error) {
@@ -43,6 +45,7 @@ func NewService(
 	}, nil
 }
 
+// Stats returns current service statistics.
 func (s *Service) Stats(ctx context.Context) (ServiceStats, error) {
 	stats, err := s.db.Stats(ctx)
 	if err != nil {
@@ -64,6 +67,7 @@ func (s *Service) Stats(ctx context.Context) (ServiceStats, error) {
 	}, nil
 }
 
+// Status returns current service status (idle or running).
 func (s *Service) Status(ctx context.Context) ServiceStatus {
 	if s.inProgress.Load() {
 		return StatusRunning
@@ -71,6 +75,7 @@ func (s *Service) Status(ctx context.Context) ServiceStatus {
 	return StatusIdle
 }
 
+// Update fetches new comics from XKCD API and stores them in database.
 func (s *Service) Update(ctx context.Context) error {
 	if !s.inProgress.CompareAndSwap(false, true) {
 		return ErrAlreadyExists
@@ -97,7 +102,7 @@ func (s *Service) Update(ctx context.Context) error {
 		exists[id] = true
 	}
 
-	// get last comics ID
+	// get last comic ID
 	lastID, err := s.xkcd.LastID(ctx)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -138,7 +143,7 @@ func (s *Service) Update(ctx context.Context) error {
 		return nil
 	}
 
-	// batch-запись извлеченных комиксов
+	// batch write fetched comics
 	if err := s.db.Add(ctx, comics...); err != nil {
 		s.log.Error("failed to add comics", "error", err)
 		return fmt.Errorf("failed to add comics: %w", err)
@@ -147,13 +152,14 @@ func (s *Service) Update(ctx context.Context) error {
 	s.metrics.SetComicsFetched(int64(len(comics)))
 	s.log.Debug("added new comics", "counter", len(comics))
 
-	// отправка сообщения через брокер-Nats после успешного обновления
+	// publish message via NATS broker after successful update
 	if err := s.publisher.Publish(EventUpdate); err != nil {
 		s.log.Error("failed to publish", "error", err)
 	}
 	return nil
 }
 
+// worker fetches and processes comics concurrently.
 func (s *Service) worker(ctx context.Context, jobs <-chan int64, results chan<- *Comic) {
 	for id := range jobs {
 		// special case
@@ -190,6 +196,7 @@ func (s *Service) worker(ctx context.Context, jobs <-chan int64, results chan<- 
 	}
 }
 
+// makeDescription combines all text fields from comic info.
 func makeDescription(info XKCDInfo) string {
 	return strings.Join([]string{
 		info.SafeTitle,
@@ -199,6 +206,7 @@ func makeDescription(info XKCDInfo) string {
 	}, " ")
 }
 
+// Drop removes all comics from database.
 func (s *Service) Drop(ctx context.Context) error {
 	if !s.inProgress.CompareAndSwap(false, true) {
 		return ErrAlreadyExists
@@ -217,7 +225,7 @@ func (s *Service) Drop(ctx context.Context) error {
 	}
 	s.metrics.SetLastUpdateTimestamp()
 
-	// отправка сообщения через брокер-Nats после успешного "обнулениия" базы
+	// publish message via NATS broker after successful database reset
 	if err := s.publisher.Publish(EventReset); err != nil {
 		s.log.Error("failed to publish", "error", err)
 	}

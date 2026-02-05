@@ -12,15 +12,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// Client is a gRPC client for the Words service.
 type Client struct {
 	log    *slog.Logger
 	conn   *grpc.ClientConn
 	client wordspb.WordsClient
 }
 
+// NewClient creates a new Words service gRPC client with exponential backoff retry.
 func NewClient(address string, log *slog.Logger) (*Client, error) {
 	conn, err := grpc.NewClient(
 		address,
@@ -44,22 +45,14 @@ func NewClient(address string, log *slog.Logger) (*Client, error) {
 	}, nil
 }
 
+// Close closes the gRPC connection.
 func (c *Client) Close() {
 	if err := c.conn.Close(); err != nil {
 		c.log.Warn("failed to close gRPC connection", "error", err)
 	}
 }
 
-func (c *Client) Ping(ctx context.Context) error {
-	if _, err := c.client.Ping(ctx, &emptypb.Empty{}); err != nil {
-		if status.Code(err) == codes.Unavailable {
-			return core.ErrServiceUnavailable
-		}
-		return err
-	}
-	return nil
-}
-
+// Norm normalizes words in the phrase.
 func (c *Client) Norm(ctx context.Context, phrase string) ([]string, error) {
 	reply, err := c.client.Norm(ctx, &wordspb.WordsRequest{Phrase: phrase})
 	if err != nil {

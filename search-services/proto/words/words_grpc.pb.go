@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Words_Ping_FullMethodName = "/words.Words/Ping"
 	Words_Norm_FullMethodName = "/words.Words/Norm"
 )
 
@@ -28,7 +26,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WordsClient interface {
-	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Norm(ctx context.Context, in *WordsRequest, opts ...grpc.CallOption) (*WordsReply, error)
 }
 
@@ -38,16 +35,6 @@ type wordsClient struct {
 
 func NewWordsClient(cc grpc.ClientConnInterface) WordsClient {
 	return &wordsClient{cc}
-}
-
-func (c *wordsClient) Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Words_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *wordsClient) Norm(ctx context.Context, in *WordsRequest, opts ...grpc.CallOption) (*WordsReply, error) {
@@ -64,7 +51,6 @@ func (c *wordsClient) Norm(ctx context.Context, in *WordsRequest, opts ...grpc.C
 // All implementations must embed UnimplementedWordsServer
 // for forward compatibility.
 type WordsServer interface {
-	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	Norm(context.Context, *WordsRequest) (*WordsReply, error)
 	mustEmbedUnimplementedWordsServer()
 }
@@ -76,9 +62,6 @@ type WordsServer interface {
 // pointer dereference when methods are called.
 type UnimplementedWordsServer struct{}
 
-func (UnimplementedWordsServer) Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
 func (UnimplementedWordsServer) Norm(context.Context, *WordsRequest) (*WordsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Norm not implemented")
 }
@@ -101,24 +84,6 @@ func RegisterWordsServer(s grpc.ServiceRegistrar, srv WordsServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Words_ServiceDesc, srv)
-}
-
-func _Words_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WordsServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Words_Ping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WordsServer).Ping(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Words_Norm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -146,10 +111,6 @@ var Words_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "words.Words",
 	HandlerType: (*WordsServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Ping",
-			Handler:    _Words_Ping_Handler,
-		},
 		{
 			MethodName: "Norm",
 			Handler:    _Words_Norm_Handler,

@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Service implements search functionality with in-memory inverted index.
 type Service struct {
 	log     *slog.Logger
 	metrics MetricsCollector
@@ -16,16 +17,18 @@ type Service struct {
 	db    DB
 	words Words
 
-	index map[string][]int64
+	index map[string][]int64 // inverted index: word -> comic IDs
 	lock  sync.RWMutex
 }
 
+// comicRank holds comic ranking information for search results.
 type comicRank struct {
 	Comic
-	matched int64
-	total   int64
+	matched int64 // number of matched keywords
+	total   int64 // total number of words in comic
 }
 
+// NewService creates a new search service instance.
 func NewService(
 	log *slog.Logger, metrics MetricsCollector, db DB, words Words,
 ) (*Service, error) {
@@ -41,6 +44,7 @@ func NewService(
 	}, nil
 }
 
+// Search performs ranked search from all comics data.
 func (s *Service) Search(ctx context.Context, phrase string, limit int64) ([]Comic, error) {
 	if phrase == "" || limit <= 0 {
 		return nil, ErrBadArguments
@@ -69,6 +73,7 @@ func (s *Service) Search(ctx context.Context, phrase string, limit int64) ([]Com
 	return s.rankedSearch(comicsInfo, setOfPhrase, limit), nil
 }
 
+// rankedSearch ranks comics by keyword matches and returns top results.
 func (s *Service) rankedSearch(comicsInfo []ComicInfo, setOfPhrase map[string]bool, limit int64) []Comic {
 	if len(comicsInfo) == 0 {
 		return []Comic{}
@@ -95,9 +100,9 @@ func (s *Service) rankedSearch(comicsInfo []ComicInfo, setOfPhrase map[string]bo
 		return []Comic{}
 	}
 
-	// сортировка по убыванию приоритетов:
-	// 1. количество абсолютных совпадений
-	// 2. соотношение matched/total
+	// sort by descending priority:
+	// 1. number of absolute matches
+	// 2. matched/total ratio
 	sort.Slice(comicsRanks, func(i, j int) bool {
 		if comicsRanks[i].matched != comicsRanks[j].matched {
 			return comicsRanks[i].matched > comicsRanks[j].matched
@@ -119,6 +124,7 @@ func (s *Service) rankedSearch(comicsInfo []ComicInfo, setOfPhrase map[string]bo
 	return rankedComics
 }
 
+// ISearch performs indexed search using inverted index.
 func (s *Service) ISearch(ctx context.Context, phrase string, limit int64) ([]Comic, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -156,7 +162,7 @@ func (s *Service) ISearch(ctx context.Context, phrase string, limit int64) ([]Co
 		return nil, fmt.Errorf("failed to get comics by comics ids: %w", err)
 	}
 
-	// сортировка по убыванию количества совпадений
+	// sort by descending number of matches
 	sort.Slice(comics, func(i, j int) bool {
 		return scores[comics[i].ID] > scores[comics[j].ID]
 	})
@@ -169,8 +175,8 @@ func (s *Service) ISearch(ctx context.Context, phrase string, limit int64) ([]Co
 	return comics[:limit], nil
 }
 
+// UpdateIndex rebuilds the inverted index from database.
 func (s *Service) UpdateIndex(ctx context.Context) error {
-	// Lock() гарантирует обновление индекса свежими данными, даже если scheduler его уже обновляет
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -193,23 +199,23 @@ func (s *Service) UpdateIndex(ctx context.Context) error {
 		}
 	}
 
-	// обновление метрик
 	s.metrics.SetIndexSize(int64(len(s.index)))
 	s.metrics.SetIndexLastUpdateTimestamp()
 	return nil
 }
 
+// ResetIndex clears the inverted index.
 func (s *Service) ResetIndex() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	clear(s.index)
 	s.log.Info("index has been reset")
 
-	// обновление метрик
 	s.metrics.SetIndexSize(0)
 	s.metrics.SetIndexLastUpdateTimestamp()
 }
 
+// HandleEvent processes events from message broker.
 func (s *Service) HandleEvent(ctx context.Context, eventType EventType) error {
 	switch eventType {
 	case EventUpdate:
