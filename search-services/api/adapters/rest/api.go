@@ -86,7 +86,7 @@ func NewSearchHandler(log *slog.Logger, searcher core.Searcher) http.HandlerFunc
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		
+
 		// parse limit parameter with default value
 		limitStr := r.URL.Query().Get(paramLimit)
 		limit, err := strconv.Atoi(limitStr)

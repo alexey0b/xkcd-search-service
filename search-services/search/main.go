@@ -102,7 +102,7 @@ func run(cfg config.Config, log *slog.Logger) error {
 
 	s := grpc.NewServer()
 	healthcheck := health.NewServer()
-	
+
 	// register gRPC services
 	healthgrpc.RegisterHealthServer(s, healthcheck)
 	searchpb.RegisterSearchServer(s, searchgrpc.NewServer(searcher))

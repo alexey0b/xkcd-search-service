@@ -107,7 +107,7 @@ func setupTestClient(t *testing.T, mock wordspb.WordsServer) *Client {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-	t.Cleanup(func() { conn.Close() })
+	t.Cleanup(func() { _ = conn.Close() })
 
 	return &Client{
 		log:    slog.Default(),

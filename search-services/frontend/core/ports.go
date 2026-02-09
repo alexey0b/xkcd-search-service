@@ -13,7 +13,7 @@ type HealthChecker interface {
 
 // UpdateStatsProvider provides database statistics and update process status.
 type UpdateStatsProvider interface {
-	GetUpdateStats(ctx context.Context) (UpdateStats, error)  // returns database statistics
+	GetUpdateStats(ctx context.Context) (UpdateStats, error)   // returns database statistics
 	GetUpdateStatus(ctx context.Context) (UpdateStatus, error) // returns update process status
 }
 

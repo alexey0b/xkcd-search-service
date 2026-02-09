@@ -39,14 +39,14 @@ func (tm *JwtAuthenticator) CreateToken(name, password string) (string, error) {
 	if name != tm.adminUser || password != tm.adminPassword {
 		return "", core.ErrInvalidCredentials
 	}
-	
+
 	// create JWT token with expiration
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Subject:   validSubject,
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(tm.ttl)),
 	})
-	
+
 	signedToken, err := token.SignedString([]byte(tm.jwtSecret))
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
@@ -65,7 +65,7 @@ func (tm *JwtAuthenticator) ValidateToken(tokenString string) error {
 	if !token.Valid {
 		return core.ErrInvalidCredentials
 	}
-	
+
 	// verify subject claim
 	subject, err := token.Claims.GetSubject()
 	if err != nil {
