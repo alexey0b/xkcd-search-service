@@ -14,7 +14,7 @@ import (
 
 const (
 	maxSearchLimit = 10000
-	searchEndpoint = "/api/search"
+	searchEndpoint = "/api/isearch"
 
 	statusEndpoint = "/api/db/status"
 	statsEndpoint  = "/api/db/stats"
@@ -39,7 +39,7 @@ func NewClient(address string, timeout time.Duration, log *slog.Logger) *Client 
 	}
 }
 
-// Search performs a search query and returns matching comics.
+// Search performs a index search query and returns matching comics.
 // Uses indexed search with normalized and stemmed words.
 func (c *Client) Search(ctx context.Context, phrase string) (core.SearchResult, error) {
 	u, err := url.JoinPath(c.address, searchEndpoint)

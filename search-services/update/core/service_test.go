@@ -24,7 +24,6 @@ func TestUpdate(t *testing.T) {
 			prepare: func(db *core.MockDB, xkcd *core.MockXKCD, words *core.MockWords, publisher *core.MockPublisher) {
 				db.EXPECT().IDs(gomock.Any()).Return([]int64{1, 2, 3}, nil)
 				xkcd.EXPECT().LastID(gomock.Any()).Return(int64(3), nil)
-				// не ожидаем вызовов Get, Norm, Add и Publish, т.к. все комиксы уже есть
 			},
 			wantErr: false,
 		},
@@ -33,8 +32,6 @@ func TestUpdate(t *testing.T) {
 			prepare: func(db *core.MockDB, xkcd *core.MockXKCD, words *core.MockWords, publisher *core.MockPublisher) {
 				db.EXPECT().IDs(gomock.Any()).Return([]int64{1, 2}, nil)
 				xkcd.EXPECT().LastID(gomock.Any()).Return(int64(4), nil)
-
-				// обрабатываем только новые комиксы (3 и 4)
 				xkcd.EXPECT().Get(gomock.Any(), int64(3)).Return(core.XKCDInfo{ID: 3, Title: "New"}, nil)
 				xkcd.EXPECT().Get(gomock.Any(), int64(4)).Return(core.XKCDInfo{ID: 4, Title: "Newer"}, nil)
 				words.EXPECT().Norm(gomock.Any(), gomock.Any()).Return([]string{"new", "comic"}, nil).Times(2)
@@ -109,8 +106,6 @@ func TestUpdate(t *testing.T) {
 				xkcd.EXPECT().Get(gomock.Any(), int64(2)).Return(core.XKCDInfo{ID: 2, Title: "Second"}, nil)
 				words.EXPECT().Norm(gomock.Any(), gomock.Any()).Return([]string{"first"}, nil)
 				words.EXPECT().Norm(gomock.Any(), gomock.Any()).Return(nil, errors.New("normalization error"))
-
-				// Добавляется только 1 комикс (второй пропущен из-за ошибки)
 				db.EXPECT().Add(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, comics ...core.Comic) error {
 					require.Len(t, comics, 1)
 					require.ElementsMatch(t, comics, []core.Comic{{ID: int64(1), Words: []string{"first"}}})

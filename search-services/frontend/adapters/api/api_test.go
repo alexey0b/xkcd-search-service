@@ -51,7 +51,7 @@ func TestSearch(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				require.Equal(t, "/api/search", r.URL.Path)
+				require.Equal(t, "/api/isearch", r.URL.Path)
 				require.Equal(t, http.MethodGet, r.Method)
 				require.Equal(t, tc.phrase, r.URL.Query().Get("phrase"))
 				require.Equal(t, "10000", r.URL.Query().Get("limit"))

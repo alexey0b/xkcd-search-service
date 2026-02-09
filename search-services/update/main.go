@@ -37,9 +37,7 @@ func main() {
 
 	var cfg config.Config
 	config.MustLoad(configPath, &cfg)
-
 	log := mustMakeLogger(cfg.LogLevel)
-
 	if err := run(cfg, log); err != nil {
 		log.Error("server failed", "error", err)
 		os.Exit(1)

@@ -57,45 +57,6 @@ make k8s-port-forward
 
 ---
 
-## Makefile Commands
-
-### Docker Compose
-
-| Command             | Description                    |
-| ------------------- | ------------------------------ |
-| `make build-images` | Build Docker images            |
-| `make up`           | Start all services             |
-| `make down`         | Stop services                  |
-| `make clean`        | Stop and remove volumes        |
-| `make test`         | Run integration tests          |
-
----
-
-### Kubernetes
-
-| Command                  | Description                    |
-| ------------------------ | ------------------------------ |
-| `make k8s-init`          | Initialize Minikube with CNI   |
-| `make k8s-start`         | Deploy application to K8s      |
-| `make k8s-delete`        | Delete all resources           |
-| `make k8s-restart`       | Recreate all resources         |
-| `make k8s-port-forward`  | Forward Ingress port           |
-| `make k8s-dashboard`     | Open Kubernetes Dashboard      |
-| `make k8s-prometheus-ui` | Open Prometheus UI             |
-| `make k8s-stop`          | Stop Minikube                  |
-| `make k8s-clean`         | Delete Minikube cluster        |
-
----
-
-### Code Quality
-
-| Command      | Description           |
-| ------------ | --------------------- |
-| `make lint`  | Run linters           |
-| `make cover` | Code coverage report  |
-
----
-
 ### Testing
 
 | Command                  | Description              |

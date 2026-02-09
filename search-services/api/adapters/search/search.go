@@ -75,34 +75,20 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 func (c *Client) Search(ctx context.Context, phrase string, limite int64) ([]core.Comic, error) {
 	stream, err := c.client.Search(ctx, &searchpb.SearchRequest{Phrase: phrase, Limit: limite})
 	if err != nil {
-		switch status.Code(err) {
-		case codes.Unavailable:
-			return nil, core.ErrServiceUnavailable
-		case codes.InvalidArgument, codes.ResourceExhausted:
-			return nil, core.ErrBadArguments
-		default:
-			return nil, err
-		}
+		return nil, searchMapError(err)
 	}
 	comics, err := collectComics(stream)
-	return comics, err
+	return comics, searchMapError(err)
 }
 
 // ISearch performs indexed search and returns matching comics.
 func (c *Client) ISearch(ctx context.Context, phrase string, limite int64) ([]core.Comic, error) {
 	stream, err := c.client.ISearch(ctx, &searchpb.SearchRequest{Phrase: phrase, Limit: limite})
 	if err != nil {
-		switch status.Code(err) {
-		case codes.Unavailable:
-			return nil, core.ErrServiceUnavailable
-		case codes.InvalidArgument, codes.ResourceExhausted:
-			return nil, core.ErrBadArguments
-		default:
-			return nil, err
-		}
+		return nil, searchMapError(err)
 	}
 	comics, err := collectComics(stream)
-	return comics, err
+	return comics, searchMapError(err)
 }
 
 // collectComics reads all comics from the gRPC stream.
@@ -119,4 +105,16 @@ func collectComics(stream grpc.ServerStreamingClient[searchpb.SearchReply]) ([]c
 		comics = append(comics, core.Comic{ID: reply.GetId(), URL: reply.GetUrl()})
 	}
 	return comics, nil
+}
+
+// searchMapError maps gRPC errors to domain errors.
+func searchMapError(err error) error {
+	switch status.Code(err) {
+	case codes.Unavailable:
+		return core.ErrServiceUnavailable
+	case codes.InvalidArgument, codes.ResourceExhausted:
+		return core.ErrBadArguments
+	default:
+		return err
+	}
 }
