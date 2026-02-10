@@ -1,5 +1,5 @@
 [![XKCD Search service CI](https://github.com/alexey0b/xkcd-search-service/actions/workflows/ci.yaml/badge.svg)](https://github.com/alexey0b/xkcd-search-service/actions/workflows/ci.yaml)
-[![Coverage Status](https://coveralls.io/repos/github/alexey0b/xkcd-search-service/badge.svg?branch=main)](https://coveralls.io/github/alexey0b/xkcd-search-service?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/alexey0b/xkcd-search-service/badge.svg)](https://coveralls.io/github/alexey0b/xkcd-search-service)
 
 # XKCD Comics Search Service
 
