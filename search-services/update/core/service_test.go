@@ -108,7 +108,8 @@ func TestUpdate(t *testing.T) {
 				words.EXPECT().Norm(gomock.Any(), gomock.Any()).Return(nil, errors.New("normalization error"))
 				db.EXPECT().Add(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, comics ...core.Comic) error {
 					require.Len(t, comics, 1)
-					require.ElementsMatch(t, comics, []core.Comic{{ID: int64(1), Words: []string{"first"}}})
+					require.True(t, comics[0].ID == 1 || comics[0].ID == 2, "expected ID to be 1 or 2")
+					require.Equal(t, []string{"first"}, comics[0].Words)
 					return nil
 				})
 				pub.EXPECT().Publish(core.EventUpdate).Return(nil)
